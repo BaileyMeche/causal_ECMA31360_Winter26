@@ -1,0 +1,193 @@
+---
+title: "ECMA 31360, PSet 1: Solutions"
+author: "YOUR NAMES, University of Chicago"
+geometry: "left=1cm,right=1cm,top=1cm,bottom=1.5cm"
+date: "XX-XX-2025"
+output: pdf_document
+header-includes:
+  - \usepackage{caption}
+  - \usepackage{float}
+  - \usepackage{xcolor}
+  - \usepackage{amsmath}
+  - \usepackage{enumitem}
+---
+
+```{r setup, include=FALSE}
+# Ensure CRAN is set for non-interactive knit sessions
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+knitr::opts_chunk$set(echo = TRUE, fig.pos = "H", out.extra = "")
+```
+
+
+# (\textcolor{blue}{[ \ \ ]} out of 40p) PART I: Review of OLS for Prediction and Description
+
+## (\textcolor{blue}{[ \ \ ]} out of 22p) Q1: Properties of the OLS Estimator when the CEF is linear-in-parameters
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 2p) Q2: CEF if linear-in-parameters when eVar is binary 0/1
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 4p) Q3: First Response to Manager
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 4p) Q4: Second Response to Manager
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 2p) Q5: Properties of a linear-in-parameter CEF
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 6p) Q6: Response to Product Manager
+
+---
+
+# (\textcolor{blue}{[ \ \ ]} out of 46p) PART II: Review of OLS for Causal Analysis
+
+## (\textcolor{blue}{[ \ \ ]} out of 15p) Q7: Homogeneous Causal Effects
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q7.a: Determinants of Expenditure
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q7.b: Interpretation of $\rho$ as Causal Impact
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q7.c: Normalization vs Assumption
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q7.d: Assumptions Necessary to Run the OLS Algorithm
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q7.e: Plan-English Description of $\hat{\rho}$
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q7.f: Statistical Properties of the OLS Estimator (first attempt)
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q7.g: ZCMA in Plain English
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q7.h: Identification of $\rho$ under ZCMA
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q7.i: Identification of $\rho$ (after weakening ZCMA)
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q7.j: Statistical Properties of the OLS Estimator under ZCMA
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q7.k: Full Independence of Observed and Unobserved Determinants of the Outcome Variable
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q7.l: Do you Expect $\hat{\rho}$ to be unbiased/consistent in the Walmart application?
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 13p) Q8: Walmart scientists' RCT
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q8.a 
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 9p) Q8.b
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q8.c 
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 14p) Q9: Heterogeneous Treatment Effects
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q9.a: Interpretation of $\rho_i$
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 5p) Q9.b: Plain-English description of $\rho_0$, $\rho_1$, and $\rho$. Interpret $\rho_1=\rho_0$.
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q9.c: Model Reformulation 
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 4p) Q9.d: Substantive Implications
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q9.e: Learning about the Average Causal Effect of Treatment on the Entire Customer Population
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 4p) Q10: Take Stock / Learnings
+
+---
+
+# (\textcolor{blue}{[ \ \ ]} out of 10p bonus) PART III: Description vs Causality - the case of Uber One
+
+## (\textcolor{blue}{[ \ \ ]} out of 10p bonus) Q11
+
+## (\textcolor{blue}{[ \ \ ]} out of 5p) Q11.a
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 3p) Q11.b
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 2p) Q11.c
+
+---
+
+# (\textcolor{blue}{[ \ \ ]} out of 14p) PART IV: A Look at the Data from the NSW Experiment
+
+## (\textcolor{blue}{[ \ \ ]} out of 14p) Q12: Describe the NSW Data
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q12.a: Description of the Treatment
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q12.b: Load and combine the data
+
+### Script and Output
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q12.c: Verify Counts
+
+### Script and Output
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 4p) Q12.d: Compute Sample Averages
+
+### Script and Output
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 5p) Q12.e: Test Equality of Means Across Treated and Control
+
+### Script and Output
+
+### Commentary
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q12.f: Lay-person description of the Sample
+
+---
+

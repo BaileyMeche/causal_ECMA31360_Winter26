@@ -1,0 +1,481 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ECMA 31360 PSet 1: Review of Econometrics 
+% Author: Melissa Tartari
+% Created: 09/11/2023
+% Last Updated: 9/24/2025
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{article}
+
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{color}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{lineno}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage[font=small,labelfont=bf]{caption}
+
+
+\setcounter{MaxMatrixCols}{10}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{acknowledgement}[theorem]{Acknowledgement}
+\newtheorem{algorithm}[theorem]{Algorithm}
+\newtheorem{axiom}[theorem]{Axiom}
+\newtheorem{case}[theorem]{Case}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{conclusion}[theorem]{Conclusion}
+\newtheorem{condition}[theorem]{Condition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{criterion}[theorem]{Criterion}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{exercise}[theorem]{Exercise}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{notation}[theorem]{Notation}
+\newtheorem{problem}[theorem]{Problem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{solution}[theorem]{Solution}
+\newtheorem{summary}[theorem]{Summary}
+\newenvironment{proof}[1][Proof]{\textbf{#1.} }{\ \rule{0.5em}{0.5em}}
+
+\usepackage[skins,breakable]{tcolorbox}
+\usepackage{bm}
+\newtcolorbox{mybox}[1][]{enhanced jigsaw,breakable,pad at break=1mm,
+left=0mm,interior hidden,colframe=Maroon,nobeforeafter=,#1}
+
+\usepackage[utf8]{inputenc}
+
+\newcommand{\E}{\mathbb{E}}      % expectation
+
+
+% Define a custom email box style
+\tcbset{
+    emailstyle/.style={
+        colback=blue!3, % Background color
+        colframe=blue!5, % Frame color
+        fonttitle=\bfseries, % Title font
+        coltitle=white, % Title color
+        colbacktitle=blue!75, % Title background
+        boxrule=0.5mm, % Thickness of the box frame
+        sharp corners, % No rounded corners
+        width=\textwidth, % Make the box the same width as the text
+        fontupper=\sffamily % Ensures sans-serif font inside the box
+    }
+}
+
+
+\textwidth=7.6in
+\textheight=9.9in
+\topmargin=-1.2in
+\headheight=0in
+\headsep=.5in
+\hoffset  -1.25in
+
+\newcommand{\psetyear}{2025}
+\newcommand{\psetpreviousyear}{2024}
+\newcommand{\psetnum}{1}
+
+\pagestyle{fancy} 
+\fancyhf{} % clear all header and footer fields
+\fancyfoot[R]{\color{Gray}{ECMA 31360 PSet \psetnum, Page \thepage}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Main Document
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\title{ECMA 31360, Pset \psetnum: Review of OLS for Prediction/Description and for Causal Analysis}
+\date{}
+\author{Melissa Tartari, University of Chicago}
+\maketitle
+\thispagestyle{fancy}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Premise
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{center}
+{\LARGE Premise: How to consume PSets and their Pedagogy}
+\end{center}
+
+This is the first PSet you encounter in this course. All PSets have a few things in common:
+\begin{itemize}
+%%%%%%%
+\item PSets start with a \textbf{reference} to the location of two files: (a) a .TEX file with the PSet’s source code, and (b) a .Rmd file serving as a template for your answers. We provide the .TEX file because, at times, students want to see the LaTeX commands used to type mathematical expressions. The .Rmd file is what you will want to open in RStudio and populate with your answers. This file lists all questions in order, reports the points attached to each question, and indicates when R code is required in the answer. It also makes grading easier because submissions conform to the same format. Initially, it may be easier to write and execute your script in a separate .R file, then copy its content into code chunks within the .Rmd file. Once you are comfortable with writing and executing commands in a .Rmd file, that's all you’ll need to use.
+%%%%%%%
+\item PSets have several \textbf{parts}. Some parts test you on the theory developed in class, others have you implement operations using R, and some combine the two tasks. Some questions will expand on what we cover in class. We hope that you’ll find this rewarding, as it demonstrates your ability to use what you’ve learned to obtain a richer set of results.
+%%%%%%%
+\item Each part of a PSet has \textbf{learning objectives}. You’ll want to read these objectives both before and after answering the questions. When reviewing them later, check whether you have attained those objectives.
+%%%%%%%
+\item The \textbf{order} in which questions are asked typically matters, as one question often builds on the answer or the concepts learned in previous questions. Therefore, it is important to answer the questions in the order they are presented.
+%%%%%%%
+\item We color technical terms, or \textbf{jargon}, green. Jargon is both powerful and risky. It is powerful because it conveys a lot of information in just one or two words, but it’s risky because using it incorrectly leads to confusion. By highlighting jargon, we underscore that each term has a precise definition that you need to understand to answer a question correctly.
+%%%%%%%%
+\item PSets typically include questions that ask you to closely examine a \textbf{formal definition} or the \textbf{statement of a theorem}. Often, we ask you to interpret assumptions and describe them in plain English. At times, we may ask you to prove one or more theorems. Algebra and basic calculus suffice; that is, the math involved is not overly demanding. You may or may not be accustomed to paying such close attention to formal definitions and theorem statements. Theorems are like culinary recipes: the assumptions are the ingredients, and the statement is the procedure. To get the dish cooked properly, you need to carefully gather all the ingredients in the right amounts and combine them in the right way. You also want to ensure that what you get is what you want. Similarly, definitions are essential for understanding what you’re working with. If a definition isn’t clear, it’s like using a can of food in a recipe without knowing what’s inside. Learning how to break down complex ideas into their components, follow logical arguments, and communicate technical concepts clearly is valuable in any career. 
+%%%%%%%%
+\item We often ask you to \textbf{explain something in plain English}. At times, we specify your audience (e.g., a fellow classmate, a layperson on the bus, or a business stakeholder). This exercise encourages you to (a) step back from the details of the answer and its derivations to distill the core message or learning, and (b) practice communicating technical concepts clearly to a non-technical audience—a highly valuable skill.
+%%%%%%%%
+\item We provide \textbf{guidance} in two ways: (a) hints, and (b) “programming guidance.” Pay attention to both. We use programming guidance as a teaching tool to expand your R knowledge and proficiency. Typically hints and guidance are placed at the end of the PSet in a separate section because it encourages you to think about the question for a while before consulting the guidance. How far can you get in answering the question without looking at the guidance?
+%%%%%%%%
+\item Each question carries one or more \textbf{points}. We do not assign half points.
+%%%%%%%%
+\item \textbf{Heads up}: PSets have a long ``shelf life'' because (a) future PSets build on previous PSets, and (b) midterm and final exams test you on the material you learn both in class and by solving PSets. Thus, to do well in exams we recommend that you make sure to solidify the learnings from each PSet and promptly and regularly look at the suggested solutions.
+
+\end{itemize}
+
+\newpage
+\noindent \textcolor{Maroon}{\textbf{References}: You can access the .TEX version of this file at \texttt{Canvas/Files/PSets/PSet1/PSet1-clean.tex} and the .Rmd version of the answer template file at \texttt{Canvas/Files/PSets/PSet1/PSet1\_Solutions\_Template.Rmd}.}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Part 1
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{center}
+{\LARGE Part 1: Review of OLS for Prediction and Description (40 points)}
+\end{center}
+
+\noindent \textcolor{Maroon}{\textbf{Learning Objectives}: You review the OLS estimator in a \textcolor{ForestGreen}{prediction} context: you have a linear-in-parameters \textcolor{ForestGreen}{Conditional Expectation Function (CEF)}, $\mathbb{E}[Y_i \mid X_i]=\beta_0+\beta_1 X_i$, and show that the OLS estimator of $\boldsymbol{\beta}=(\beta_0,\beta_1)$ is unbiased and consistent. This part of the PSet leverages knowledge you acquired in previous courses.}
+
+\begin{enumerate}[label=\textbf{Q\arabic{enumi}}.,ref=Q\arabic{enumi}, wide=0pt, itemsep=0em, topsep=5pt]
+
+%%%%% When CEF is linear, OLS estimator is unbiased and consistent for the parameters of the CEF
+\item (22p) Prove \textbf{Claim \ref{cl:OLS-when-CEF-is-lin}}. 
+ \begin{mybox}
+    \begin{claim}[Properties of the OLS Estimator when the CEF is linear-in-parameters]\label{cl:OLS-when-CEF-is-lin}
+    Consider an IID population where $(X_i,Y_i)$ are such that $Var[X_i]>0$ and the CEF has the form $E[Y_i|X_i]=\beta_0+\beta_1 X_i$, i.e., it is linear-in-parameters. Let $\{(Y_i,X_i)|i=1,\ldots,n\}$ be a sample of size $n$ drawn randomly from the population. Let  $\{(y_i,x_i)|i=1,\ldots,n\}$ denote a particular realization of the random sample, and assume that $x_i$ is not constant. Regress $y_i$ on a constant and $x_i$ and denote the OLS values of the intercept and slope coefficient by $(\hat{\beta}_0,\hat{\beta}_1)$. As a function of the random sample, $(\hat{\beta}_0,\hat{\beta}_1)$ are unbiased and consistent estimators of the CEF's parameters.
+    \end{claim}
+    \end{mybox}
+    
+%%%%% CEF is linear when X is binary
+\item  (2p) Prove \textbf{Claim \ref{cl:CEF-is-lin-when-X-binary}}.
+ \begin{mybox}
+    \begin{claim}[Linearity-in-parameters of the CEF for binary variables]\label{cl:CEF-is-lin-when-X-binary}
+    Let $Y$ and $X$ be two RVs such that $X$ takes values in $\{0,1\}$. Then, there exist two scalars $(\beta_0,\beta_1)$ such that $\E[Y \mid X]=\beta_0+ \beta_1 X$, i.e., such that the CEF is linear-in-parameters.
+    \end{claim}
+    \end{mybox}
+        
+%%%%% Manager wants answer quick and thinks the theory justifies it
+\item (4p) You (let's say your name is Ty) are employed as a data scientist by Amazon. Your team has access to a random sample of 1,000,000 Amazon customers, some are \textit{Prime} members, some are not. (Amazon Prime is a subscription plan which, among other things, entitles a customer to free shipping on many items sold on Amazon.com.) The metrics included in the data are a customer's total spend for the month of December \psetpreviousyear, denoted $Y_i$, and their \textit{Prime} status, denoted $D_i$ with $D_i=1$ if customer $i$ is a \textit{Prime} subscriber, and 0 otherwise. Your stakeholder is interested in quantifying the \textbf{causal impact of \textit{Prime} membership on customer spend}, i.e., the impact of \textit{Prime} membership holding all other determinants of spend fixed. They regard this piece of information as central to informing an outstanding decision: whether to increase \textit{Prime} advertisement expenditures. Alyson, your manager and previously a data scientist, sends you the email below. You ponder this request and decide to push back. Compose a response to your manager including the justification for your position.
+
+\begin{tcolorbox}[title=Email from Manager: Alyson Booth, emailstyle]
+Subject: Advertising Spend Analysis
+\\ \\
+Hi Ty, \\
+\textbf{Claim \ref{cl:CEF-is-lin-when-X-binary}} says that the CEF is always linear-in-parameters when $X_i$ is binary. \textbf{Claim \ref{cl:OLS-when-CEF-is-lin}} says that when the CEF is linear-in-parameters, the OLS procedure yields good estimators (i.e., unbiased and consistent) of the CEF's parameters under the minimal added condition that $X_i$ varies in the (population and) sample. Therefore, when $X_i$ is binary, the OLS estimators of the slope coefficient is an unbiased and consistent estimator of the causal effect of $X_i$ on the outcome variable $Y_i$. That's great for us: all you have to do is to tap into our historical customer-level data, regress customer spend on a constant and the \textit{Prime} indicator, and use the OLS estimate of the slope coefficient to answer our stakeholder's ask. Please index on \href{https://www.youtube.com/watch?v=Iby_rZHtX7w}{bias for action} and email me the answer weaved into a business-friendly paragraph within the next 15 minutes. \\
+
+Thanks, Alyson \\
+\href{https://aws.amazon.com/executive-insights/content/how-amazon-defines-and-operationalizes-a-day-1-culture/}{It is always Day 1!}
+\end{tcolorbox}
+
+
+
+%%%%% Manager is skeptical of your explanation, goes to a business analysis
+\item (4p) Alyson is less than thrilled about your push-back: they want to provide an answer to their stakeholder ASAP. They jump onto Slack and fire you a short message: \textcolor{Orchid}{``Ty: Our answer does not need to be perfect, it suffices that it is directionally correct. We must \href{https://www.youtube.com/watch?v=bgOyaYq8UNI}{deliver results}!''} They also quickly reach out to Nashant, the business analyst in your team, and ask them to compute the difference in average spend between \textit{Prime} and non-\text{Prime} members, which turns out to be \$52 per month per customer. They email you back, see below. Compose a response to your manager including the justification for your position. 
+
+\begin{tcolorbox}[title=Email from Manager: Alyson Booth, emailstyle]
+Subject: Advertising Spend Analysis
+\\ \\
+Hi Ty, \\
+I appreciate your \href{https://www.youtube.com/watch?v=AE35YwLlWkw}{insisting on the highest standards} and questioning the validity of the regression-based approach. But I am confident that you can stand behind a model-free answer that simply states a fact, namely that \textit{Prime} status increases spend on average by \$52 per month. The data truly does speak for itself! I need you to approve this answer and use it in your email to the stakeholder (put me in Cc).  \\
+
+Thanks, Alyson \\
+\href{https://aws.amazon.com/executive-insights/content/how-amazon-defines-and-operationalizes-a-day-1-culture/}{It is always Day 1!}
+\end{tcolorbox}
+
+ %%%%% unobservable-based formulation when CEF is linear
+ \item (2p) Prove \textbf{Claim \ref{cl:CEF-lin-unobs-formulation}}.
+\begin{mybox}
+    \begin{claim}[Properties of a linear-in-parameters CEF]\label{cl:CEF-lin-unobs-formulation}
+    Let $Y$ and $X$ be two RVs. Denote by $\mathcal{X}$ the support of the distribution of $X$. If $\E[Y \mid X]=\beta_0+\beta_1 X$ for same scalar $(\beta_0,\beta_1)$ (i.e., if the CEF is linear-in-parameters), then there exists a RV $\varepsilon$ such that $Y=\beta_0+\beta_1 X + \varepsilon$ with $\E[\varepsilon \mid X=x]=\E[\varepsilon] \ \forall x \in \mathcal{X}$ (i.e., $\varepsilon$ is mean-independent of $X$). The converse is also true: if $Y=\beta_0+\beta_1 X+ \varepsilon$ with $\E[\varepsilon \mid X=x]=E[\varepsilon]\ \forall x \in \mathcal{X}$ then $\E[Y\mid X]=\beta_0+\beta_1 X$.
+    \end{claim}
+    \end{mybox}
+
+%%%%% A senior-data scientists steps in
+\item (6p) The issue is escalated to Jay, the Sr. product manager in your team. They review the email exchanges so far and write back to your and Alyson, see below. Compose a response to Jay. Note: Your numerical example (4p) should be as simple as possible and have actual numbers, so that a business audience may understand the issues that you want to explain. You should also have a more technical section (which is optional for the business audience) addressed to a data science audience, containing the technical detail that complement your numerical example (2p).
+
+\begin{tcolorbox}[title=Email from Sr. Product Manager: Jay Tran, emailstyle]
+Subject: Advertising Spend Analysis
+\\ \\
+Hi Ty,\\
++ Alyson for visibility
+\begin{itemize}
+\item I took econometrics in college. That was a few years back but I remember that sample size matters. In our case the sample size is so large that we should trust that Nashant's estimate is close to the truth. Should we not?
+\item A simple and fully worked-out example that illustrates --- using actual numbers --- your concerns would go a long way. Can you write that up?
+\end{itemize}
+
+Thanks, Jay \\
+\href{https://www.aboutamazon.com/news/company-news/2016-letter-to-shareholders}{We delight our customers!}
+\end{tcolorbox}
+
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Part 2
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{center}
+{\LARGE Part 2: Review of OLS for Causal Inference (46 points)}
+\end{center}
+
+\noindent \textcolor{Maroon}{\textbf{Notation}: Starting with this part of the PSet we no longer use upper case and small case letters to distinguish between random variables and realizations of random variables. The context determines what is what.}\\
+
+\noindent \textcolor{Maroon}{\textbf{Learning Objectives}: You review the OLS estimator in a causal context. Comparing this context to that considered in Part 1 yields a lot of learning. You do \underline{not} need the course material unless \underline{explicitly} stated because you use the traditional (i.e., pre Rubin Causal Model) approach to causal analysis (from econometrics courses).}\\
+
+\begin{enumerate}[label=\textbf{Q\arabic{enumi}}.,ref=Q\arabic{enumi}, wide=0pt, itemsep=1em, topsep=5pt, resume]
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ % Homogeneous effects
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    \item (15p) Walmart Inc. is an American retail corporation that operates a chain of hypermarkets. Walmart introduced \href{https://www.samsclub.com/sams/pagedetails/content.jsp?pageName=aboutSams&xid=hpg_member_3}{\textit{Sam's Club Plus}} in February 2018. Membership in \textit{Sam's Club Plus} earns customers cash rewards (e.g., they get \$10 back for every \$500 spent on qualifying purchases), free-shipping on many items, and reduced 2-day shipping charges. \textit{Sam's Club Plus} charges an annual fee of \$100. Shoppers may use brick-and-mortar Walmart stores, or shop online at Walmart.com. Let $y_{i}$ be customer $i$'s spend at Walmart.com in a given month. Let $D_{i}=1$ if customer $i$ is a \textit{Sam's Club Plus} member, and zero otherwise. Assume membership status does not vary during the month. $y_{i}$ is determined by the customer's membership status ($D_{i}$) and other determinants ($u_{i}$) according to the \textcolor{ForestGreen}{homogeneous treatment effects} model:\label{item:q1}
+    
+    \begin{equation} \label{model_1}
+    y_{i}=\alpha +\rho D_{i}+u_{i}.
+    \end{equation} 
+    Note that $\rho$ is the same for all customers, hence the name of the model. For example, $u_{i}$ may include household income and size. As $\left( y_{i},D_{i},u _{i}\right) $ vary across customers, we think of them as RVs. Let $E\left[ u_{i}\right] =0$, where the expectation is taken with respect to the \textcolor{ForestGreen}{distribution} of $u_{i}$ in the \textcolor{ForestGreen}{population} of Walmart.com customers. You have data on a \textcolor{ForestGreen}{sample} of size $n$ of customers: $\left\{ \left( y_{i},D_{i}\right) |i=1,\ldots,n\right\} $. Note: $u_{i}$ is not included in the data for any $i$.\footnote{That is, you observe the customer's spend and their membership status but not their household income and size, nor any of the other determinants of how much they spend on Walmart.com. This is the reason why we use the letter $u$, it is mnemonic for \textit{unobserved}.} Some of the sample customers are \textit{Sam's Club Plus} members, some are not. As your data contains a mix of both types of customers we say that you  have \textcolor{ForestGreen}{``observational variation in the cause or treatment''}. $\left( \alpha ,\rho \right) $ are \textcolor{ForestGreen}{unknown parameters}. Let $\overline{y}^{0}$ (respectively, $\overline{y}^{1}$) denote the \textcolor{ForestGreen}{sample average} of $y_{i}$ across sample customers with $D_{i}=0$ (respectively, with $D_{i}=1$).
+    
+    \begin{enumerate}
+        \item (1p) Provide two additional examples of determinants of spend that may be part of $u _{i}$.\label{item:ols:economics}
+        
+        \item (1p) Show that $\rho$ is the causal impact of \textit{Sam's Club Plus} membership on a customer's spend, \underline{in the sense that}, $\rho$ is the difference in a customer's spend with and without membership holding all other determinants the same.
+        
+        \item (1p) Is $E\left[ u _{i}\right] =0$ an \textcolor{ForestGreen}{assumption} or a \textcolor{ForestGreen}{normalization}? Show it.\label{item:normalization}
+                
+        \item (1p) Let $\left( \widehat{\alpha },\widehat{\rho }\right) $ denote the \textcolor{ForestGreen}{Ordinary Least Squares} (henceforth OLS) \textcolor{ForestGreen}{estimator} of parameters $\left(\alpha ,\rho \right)$ in model (\ref{model_1}). Do you need to make any assumption on $u _{i}$ to compute $\left( \widehat{\alpha },\widehat{\rho }\right) $ in a particular sample?
+
+        
+        \item (2p) You know that expression (\ref{ols_simplereg}) gives the closed-form of the OLS estimators $\left( \widehat{\alpha }, \widehat{\rho }\right)$. Use these expressions to describe $\left( \widehat{\alpha }, \widehat{\rho }\right) $ in plain English.\label{item:q1-ols-as-group-averages}
+                \begin{equation} \label{ols_simplereg}
+            \left[ 
+            \begin{array}{c}
+            \widehat{\alpha } \\ 
+            \widehat{\rho}
+            \end{array}
+            \right] =\left[ 
+            \begin{array}{c}
+            \overline{y}^{0} \\ 
+            \overline{y}^{1}-\overline{y}^{0}
+            \end{array}
+            \right] \text{.}  
+        \end{equation}
+                
+        \item (1p) \underline{Without further assumptions}: Are $\left( \widehat{\alpha }, \widehat{\rho }\right) $ unbiased/consistent estimators of $\left( \alpha,\rho \right) $? Explain (no proof).
+        
+        \item (1p) You have a \textcolor{ForestGreen}{random sample} (RS) of Walmart.com customers. In econometrics the assumption that $E\left[ u _{i}|D_{i}=1\right] =E\left[ u _{i}|D_{i}=0\right] $ is called the \textcolor{ForestGreen}{``zero conditional mean assumption''} (ZCMA) because, once we make the normalization $E[u_i]=0$, it writes as $E\left[ u _{i}|D_{i}=1\right] =E\left[ u _{i}|D_{i}=0\right] = E[u_i]=0$. Describe the ZCMA in plain English. 
+        
+        \item (1p) Show that $\rho$ is identified if ZCMA holds. \label{item:ols:identification}
+        
+        \item (1p) Can you weaken ZCMA and still achieve identification of $\rho$? Yes/no and justify.\label{item:ols:weaken-zcma}
+        
+        \item (2p) Assume that ZCMA holds. Is estimator $\widehat{\rho}$ unbiased? Is it consistent?\label{item:ols:statistical-properties}
+        
+        \item (1p) Assume that $u _{i}\bot D_{i}$ in place of ZCMA. Does your answer to \textbf{\ref{item:ols:statistical-properties}} change? If it does change, how?\label{item:ols:independence}
+        
+        \item (2p) In light of your answers to the previous questions: Do you expect estimator $\widehat{\rho}$ to be unbiased/consistent when constructed using a sample of actual Walmart.com customers chosen at random? Explain.
+        \end{enumerate}
+        
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ % Walmart RCT
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+        \item (13p) Consider the time \textbf{before} Walmart introduced \textit{Sam's Club Plus}. Sales leadership have come up with the idea of a \textit{Sam's Club Plus} membership that offers cash back on all orders. Scientists want to design and carry out a \textcolor{ForestGreen}{randomized control trial (RCT)} to estimate how different consumer spend would be on average with a \textit{Sam's Club Plus} membership. The estimate would help stakeholders decide whether to roll-out a \textit{Sam's Club Plus} program, and how to price it. \label{item:q2}
+        \begin{enumerate}
+        
+        \item (2p) Suggest two reasons why a customer's spend at Walmart.com may differ with versus without a \textit{Sam's Club Plus} membership, all else the same.
+        
+        \item (9p) The Walmart scientists carried out an RCT: they \textcolor{ForestGreen}{randomly assigned} (RA) \textit{Sam's Club Plus} membership status to $10,000$ existing customers (at no charge) (\textcolor{ForestGreen}{treated group}) and left the rest of the customers \textit{as is} i.e., without the membership (\textcolor{ForestGreen}{control group}). We mentioned in class that RCTs are subject to imitations/challenges, see \texttt{CAUS\_intro.pdf}. With reference to the Walmart RCT, describe situations that what would produce \textcolor{ForestGreen}{substitution bias} and, separately, \textcolor{ForestGreen}{contamination bias}.\label{item:rct-biases}
+
+        
+        \item (2p) The RCT is carried out. The post-experiment analysis sample includes the $10,000$ customers in the treatment group, and $10,000$ customers chosen randomly from the control group. For each sample customer, the data only records the customer's membership status and how much they spent at Walmart.com during the first month following the date of RA, i.e., $\left\{ \left( y_{i},D_{i}\right) |i=1,\ldots,n=20,000\right\} $. Can the scientists use the \textcolor{ForestGreen}{experimental variation} in this data to estimate $\beta_1$ in model (\ref{model_1}) by OLS? Explain. How shall they interpret the resulting OLS estimate?
+    \end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Heterogeneous effects
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 
+    \item (14p) The setting is as in \textbf{\ref{item:q1}} but for the following: $y_{i}$ is determined by a customer's \textit{Sam's Club Plus}-membership status ($D_{i}$) and other unobserved determinants ($v _{i}$) according to the \textcolor{ForestGreen}{heterogeneous treatment effects} model: \label{item:q3}
+    \begin{equation}\label{model_2}
+    y_{i}=\alpha +\rho_{i}D_{i}+v_{i}. 
+    \end{equation}
+Note that $\rho_{i}$ varies across customers, hence the name of the model. You have access to a RS of existing Walmart customers. As in \textbf{\ref{item:q1}}, the data is the collection $\left\{ \left( y_{i},D_{i}\right) |i=1,\ldots,n\right\} $. Note that $\rho_{i}$ is \textbf{not} included in your data, nor is $v_i$.
+
+    \begin{enumerate}
+        \item (2p) Interpret $\rho_{i}$.
+        \item (5p) Think of each $\rho_{i}$ as a \textcolor{ForestGreen}{draw} from a distribution. Let $\rho \equiv E\left[ \rho_{i}\right] $, $\rho_{1} \equiv E\left[ \rho_{i}|D_{i}=1\right]$, and $\rho_{0} = E\left[ \rho_{i}|D_{i}=0\right]$. Describe in plain English these three objects. Interpret in plain English the assumption $\rho=\rho_1=\rho_0 $. Speculate about why this assumption is called \textcolor{ForestGreen}{``no selection on gains''} (specialize your answer to the situation being considered).\label{item:q3-att}
+        %%%%%%%%%%%
+        \item (1p) Verify that you can rewrite model (\ref{model_2}) as follows:
+     \begin{equation}\label{model_3}
+    y_{i}=\alpha +\rho_1 D_{i}+u_{i} \text{ with } u_i \equiv v_i+(\rho_i-E[\rho_i|D_i=1])D_i. 
+    \end{equation}       
+%%%%%%%%%%%
+        \item (4p) Consider the OLS estimator of the slope parameter in model (\ref{model_3}). In \textbf{\ref{item:q1}} you established that $\widehat{\rho_1 }=\overline{y}^{1}-\overline{y}^{0}$ and $\widehat{\rho_1 }$ is unbiased for $\rho_1$ under the ZCMA $E[u_i|D_i=1]=E[u_i|D_i=0]$. 
+        \begin{enumerate}
+        \item (2p) What are the substantive benefits of this result? That is, what do you learn about the causal effect of the treatment?
+        \item (2p) What does the ZCMA $E[u_i|D_i=1]=E[u_i|D_i=0]$ imply for the relationship between the unobserved ($v_i$) and observed ($D_i$) determinants of the outcome?
+        \end{enumerate}
+
+%%%%%%%%%%%
+\item (2p) Under which additional condition(s) if any does $\widehat{\rho}_1$ allow us to learn the average causal effect of treatment for the entire population?
+
+    \end{enumerate}
+    
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ % Take stock
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+    \item (4p) Take stock. You've worked with two models: (1) $y_{i}=\alpha +\rho D_{i}+u _{i}$, see expression (\ref{model_1}); and (2) $y_{i}=\alpha +\rho_{i}D_{i}+v_{i}$, see expression (\ref{model_2}). You've considered one estimator: the OLS estimator of the intercept and slope coefficients in a linear regression of customer spend ($y_i$) on a constant term and the indicator of \textit{Sam's Club Plus} membership status ($D_i$). You've spelled out the assumptions that suffice for the OLS estimator of the slope coefficient to be unbiased for $\rho$ in model (\ref{model_1}), and for the mean of $\rho_{i}$ in the sub-population of \textit{Sam's Club Plus} members or in the entire population in model (\ref{model_2}). What did you learn about interpreting the OLS estimator of the slope coefficient in a causal context? Write  a paragraph (3 to 4 sentences).
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Part 3
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{center}
+{\LARGE Part 3: Causality vs. Description — The Case of Uber One (10 bonus points)}
+\end{center}
+
+\noindent \textcolor{Maroon}{\textbf{Learning objective:} Practice distinguishing answers to causal questions from answers to descriptive questions.}
+
+\begin{enumerate}[label=\textbf{Q\arabic{enumi}}.,ref=Q\arabic{enumi}, wide=0pt, itemsep=1em, topsep=5pt, resume]
+
+\item (10p) In 2021 Uber \href{https://investor.uber.com/news-events/news/press-release-details/2021/Uber-Introduces-Uber-One-A-New-Membership-Program-Bringing-Together-the-Best-of-Uber/default.aspx}{launched} \emph{Uber One}, a single membership that bundles benefits for Uber rides and Uber Eats. The program advertises, among other things, discounts and \$0 delivery fees on eligible orders. The other day I received a prompt in the Uber app about this program. The \textbf{left} screenshot is the main promo screen. Tapping the information icon (\textit{i}) next to “Members save \$28 on average every month” opens the \textbf{right} screenshot, a pop-up titled “Savings details.”
+
+\begin{center}
+\begin{minipage}{0.28\textwidth}\centering
+  \includegraphics[width=\linewidth]{UberOne-1.png}
+\end{minipage}
+\hspace{0.04\textwidth}
+\begin{minipage}{0.28\textwidth}\centering
+  \includegraphics[width=\linewidth]{UberOne-2.png}
+\end{minipage}
+\end{center}
+
+\begin{enumerate}[label=(\alph*), itemsep=0.8em]
+\item (5p) Treat the claim “Members save \$28 on average every month” as an \emph{answer looking for a question}. What is the question that produces this answer? Is that question descriptive or causal? Briefly justify.
+
+\item (3p) Based on the “Savings details” pop-up (the \textbf{right} figure), write pseudocode (high-level steps) for how Uber likely computes the “\$28 per month per member” figure.
+
+\item (2p) Now think as a rider deciding whether to join Uber One. What question do \emph{you} want answered? Is it descriptive or causal? Explain in one or two sentences.
+\end{enumerate}
+
+\end{enumerate}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Part 4
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{center}
+{\LARGE Part 4: A First Look at the Data from the NSW Experiment (14 points)}
+\end{center}
+
+\noindent \textcolor{Maroon}{\textbf{Learning Objectives}: Starting with this PSet you use experimental data with the ultimate objective of estimating the effect of the offer of employment \textit{cum} training on earnings. You are asked to mimic the steps of empirical analysis: 1) describe control and treated groups (this PSet); 2) test balance in predetermined characteristics to ascertain whether randomization was carried out successfully; 3) estimate impact using the treated-control comparison estimator and regression adjustment; 4) understand the conceptual difference b/w the impact of the offer of training and that of undergoing training.}\\
+
+\begin{enumerate}[label=\textbf{Q\arabic{enumi}}.,ref=Q\arabic{enumi}, wide=0pt, itemsep=1em, topsep=5pt, resume]
+\item (14p) The National Supported Work (NSW) demonstration project was a transitional, subsidized work experience program for people with long-standing employment problems. NSW was implemented in 1976-77 as a \textcolor{ForestGreen}{Randomized Control Trial (RCT)}. Eligible applicants were randomly assigned by the ``flip of a coin'' either to treatment or control. Treated individuals were offered participation in the NSW employment \textit{cum} training program for a period of 6 to 18 months, controls were not. Those randomly selected to join the program participated in various type of work, such as restaurant and construction work. Information on pre-intervention characteristics was obtained from initial surveys and the Social Security Administration records. Both the treated and the control groups participated in follow-up surveys at specific intervals. The outcome we focus on are earnings measured in 1978, i.e., about one year post-intervention. You work with Dehejia and Wahba (1999, 2002)'s extract of the NSW original data.\footnote{\href{https://www.jstor.org/stable/2669919}{Dehejia and Wahba (1999)} Causal Effects in Nonexperimental Studies: reevaluating the Evaluation of Training Programs, \textit{JASA}, pp. 1053-1062 and \href{https://users.nber.org/~rdehejia/papers/matching.pdf}{Dehejia and Wahba (2002)} Propensity-score Matching Methods for Nonexperimental Causal Studies, \textit{ReStat}, pp. 151-161. The original data (not used in the pset) is available at the \href{http://www.icpsr.umich.edu/icpsrweb/ICPSR/studies/7865}{ICPSR page}.} In this extract, the treated sample consists of 185 males, and the control sample of 260 males. Here are the questions:
+\begin{enumerate}
+\item (1p) What is the treatment in this experiment?
+\item (1p) Load and combine the NSW data from \texttt{nswre74\_control.csv} and \texttt{nswre74\_treated.csv} into one dataframe. 
+\item (1p) Verify the counts of treated and control units.
+\item (4p) Complete Table \ref{tab:Tab_NSW_1}, i.e., fill the blank spaces in columns numbered (4) and (5). Note: Variables whose counter is 1 through 10 are called \textcolor{ForestGreen}{pre-determined variables}, i.e., they capture characteristics determined at or before treatment assignment; some of these variables are background characteristics (e.g., \texttt{edu}), others capture a subject's pre-RCT labor market experience (e.g., \texttt{u75}). \texttt{re78} is the observed outcome variable. \texttt{treat} is the indicator of treatment status.\label{item:compute-avg-nsw}
+
+\begin{table}[!ht!]
+\centering
+\begin{tabular}{ccccc}
+\hline
+\textbf{Variable} & \textbf{Variable}    & \textbf{Variable}    & \multicolumn{2}{c}{\textbf{Sample Average}}    \\ \cline{4-5} 
+\textbf{Counter} & \textbf{Name}       & \textbf{Definition}                        & \textbf{Treated} & \textbf{Control} \\ \hline
+(1) & (2) & (3) & (4) & (5) \\ \hline
+1 & \texttt{age}      & Age (in years)                     &             &             \\
+2 & \texttt{edu}      & Education (in years)               &             &            \\
+3 & \texttt{nodegree} & =1 if education $<12$, zero otherwise             &             &             \\
+4 & \texttt{black}    & =1 if Black, zero otherwise                       &             &             \\
+5 & \texttt{hisp}     & =1 if Hispanic, zero otherwise                    &             &             \\
+6 & \texttt{married}  & =1 if married, zero otherwise                     &             &             \\
+7 & \texttt{u74}      & =1 if unemployed in '74, zero otherwise           &             &             \\
+8 & \texttt{u75}      & =1 if unemployed in '75, zero otherwise           &             &             \\
+9 & \texttt{re74}     & Real earnings in '74 (in '82 \$) &             &            \\
+10 & \texttt{re75}     & Real earnings in '75 (in '82 \$) &             &            \\
+\hline
+11 & \texttt{re78}     & Real earnings in '78 (in '82 \$) &             &            \\
+12 & \texttt{treat}    & =1 if received offer of employment \textit{cum} training, zero otherwise  & 1                & 0                \\
+\hline
+Sample Size                        &                           &       & 185              & 260              \\ \hline
+\end{tabular}
+\caption{Sample Averages of 10 pre-determined Variables and the Outcome Variable in the NSW Data, by Group (\textbf{Treated} includes individuals assigned to treatment and \textbf{Control} includes individuals assigned not to be treated).}
+\label{tab:Tab_NSW_1}
+\end{table}
+
+%%%%%%%%%%%%%%%%%%
+\item (5p) Proper random assignment of treatment \textcolor{ForestGreen}{\textit{balances}} all the subjects' characteristics, including all determinants of the outcome (but for treatment status), both observed and unobserved. Thus, an implication of proper randomization is that there should be no systematic differences (i.e., no ``imbalance'') between control and treatment groups in terms of their observed predetermined variables (OPVs).\footnote{OPVs are often called ``covariates,'' the name stems from the traditional approach to causal inference which uses OPVs as regression covariates, i.e., as right-end-side variables in a regression equation.} You always want to check this implication in your data, because what you find informs how you setup estimation. Here you carry out the check as follows: test the hypothesis that the two groups have the same means for all OPVs, variable by variable. Specifically, test that each variable's mean is the same in the control and treated groups by running 10 simple linear regressions (SLR) specifications. Use a $\alpha=5\%$ significance level and look at the relevant 10 T test statistics, comment on your findings.
+
+%%%%%%%%%%%%%%%%%%
+\item (2p) Write 1 to 3 sentences to provide a clear and crisp description of the sample to a lay person (imagine describing the sample to a friend over dinner).
+\end{enumerate}
+
+
+\end{enumerate}
+
+\bigskip
+
+
+
+%%%%%%%%%%%%%%%%%%%%% Guidance
+\begin{center}
+{\LARGE Guidance}
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%% Part 1
+\begin{enumerate}[label=\textbf{Q\arabic{enumi}}.,ref=Q\arabic{enumi}, wide=0pt, itemsep=1em, topsep=5pt, start=1]
+\item \textcolor{gray}{\textbf{Hint}: Points assigned as follows: (1p) for OLS minimization problem and FOCs; (1p) for derivation of the closed-form solution; (3p) for proving unbiasedness of $\hat{\beta}_1$; (3p) for proving unbiasedness of $\hat{\beta}_0$; (10p) for proving consistency of $\hat{\beta}_1$; (4p) for proving consistency of $\hat{\beta}_0$.  Points are assigned for the proofs only in so far as the correct assumptions or properties are invoked, that is, correct derivations that lack an explicit justification don't get points. You want to use the definitions of unbiased estimator from PSet0 as well as other results reviewed in PSet0 such as the Law of Iterated Expectations (LIE), the Law of Large Numbers (LLN), the Slutsky's Theorem (SLT), and the Continuous Mapping Theorem (CMT). \textbf{Note}: Many estimators developed in the course can be had \textit{via} linear regression, thus familiarity with OLS is important.}
+%%%%
+\item \textcolor{gray}{\textbf{Hint}: Find the specific values of $(\beta_0,\beta_1)$ that verify the statement.}
+%%%%
+\item \textcolor{gray}{\textbf{Note}: All references to Amazon.com and its customers in this problem set are entirely fictitious and are used solely for the purpose of illustrating statistical concepts and their application in various contexts. The Leadership Principles cited in the email exchanges  are real.}
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%% Part 2
+\begin{enumerate}[label=\textbf{Q\arabic{enumi}}.,ref=Q\arabic{enumi}, wide=0pt, itemsep=1em, topsep=5pt, start=7]
+\item \textcolor{gray}{\textbf{Note}: All references to Walmart.com and its customers in this problem set are entirely fictitious and are used solely for the purpose of illustrating statistical concepts and their application in various contexts.} 
+\begin{enumerate}
+\item \textcolor{gray}{\textbf{Hint}: In the background there is a consumer demand model, i.e., you think of model (\ref{model_1}) as a \textcolor{ForestGreen}{consumer expenditure function} from microeconomics. \textbf{Note}: It is common to use $D_i$ to denote a binary 0/1 variable, it is mnemonic for \textcolor{ForestGreen}{dummy variable} to mean that it stands in for a qualitative characteristic (in this case for \textit{Prime status}). }
+\item None
+\item \textcolor{gray}{\textbf{Hint}: An assumption imposes a restriction on the objects/items present in your model, the restriction may or may not hold. For example, if a claim is stated subject to an assumption then your proof will use the assumption to arrive at the result, which means that the result may not obtain had you dropped the assumption. A normalization is when you recognize that two (or more) objects/items in a model are not separately identified, i.e., there is no way to learn about each of them separately, e.g., you may only learn their sum or product, or some other function of the two (or more) objects. If you recognize such a situation in your model you re-parametrize the model so that the objects in the reformulated model are learnable. }
+\item None
+\item \textcolor{gray}{\textbf{Note}: Makes sure that you know how to derive these closed-form expressions as we will use them repeatedly during the quarter. }
+\item None
+\item None
+\item \textcolor{gray}{\textbf{Hint}: Express $\rho$ \textit{exclusively} as a function of \textcolor{ForestGreen}{population data moments (PDM)}, that is, features of the population distribution of $(y_i,D_i)$.}  
+\item \textcolor{gray}{\textbf{Hint}: Mean independence implies zero correlation but the other way around need not obtain. However, you can verify that given two RVs $X$ and $D$ such that $D$ is binary 0/1 you have $Cov(X,D)=p(1-p) \Bigl( E[X|D=1]-E[X|D=0] \Bigr)$ where $p \equiv \Pr(D=1)$. What does this imply?}
+\item \textcolor{gray}{\textbf{Hint}: You may use proofs previously developed in this PSet.}
+\item \textcolor{gray}{\textbf{Note}: The symbol ``$\bot $'' signifies \textcolor{ForestGreen}{statistical independence}.} 
+\end{enumerate}
+%%%%%%%
+\item \textcolor{gray}{\textbf{Hint for \ref{item:rct-biases}}: Feel free to use the prompt ``What are substitution bias and contamination bias in RCTs?'' on your preferred chat bot or web-browser.}
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%% Part 4
+\begin{enumerate}[label=\textbf{Q\arabic{enumi}}.,ref=Q\arabic{enumi}, wide=0pt, itemsep=1em, topsep=5pt, start=12]
+
+\item Here is the guidance: 
+\begin{enumerate}
+\item None.
+\item \textcolor{gray}{\textbf{Programming Guidance}: To load data you may use \href{https://www.rdocumentation.org/packages/utils/versions/3.6.2/topics/read.table}{\texttt{utils::read.delim( )}} where  \texttt{utils} is the package and \\ \texttt{utils::read.delim( )} is one of its functions; another option is \texttt{read.csv( )}. There are other packages/functions that accomplish this task, feel free to use whichever you prefer. To stack dataframes \texttt{df1} and \texttt{df2} into a combined dataframe \texttt{df} you may use \href{https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/cbind}{\texttt{df <- rbind(df1,df2)}} (mnemonic for row bind) available in base R; see \href{https://www.statology.org/rbind-in-r/}{Example 4}.} 
+
+
+\item \textcolor{gray}{\textbf{Programming Guidance}: To count how many units are included in each sample you may use \\ \href{https://dplyr.tidyverse.org/reference/count.html}{\texttt{dplyr::tally(dplyr::group\_by(df, treat))}} which employs the \texttt{dplyr} package and the function \texttt{group\_by( )} to group by the treatment column \texttt{treat} and then \texttt{dplyr::tally( )} to produce the counts.}
+
+\item \textcolor{gray}{\textbf{Programming Guidance}: To summarize multiple columns (e.g., compute averages) you may use \\ \href{https://dplyr.tidyverse.org/reference/summarise_all.html}{\texttt{dplyr::summarise\_all( )}} in piped format, i.e. \texttt{dplyr::group\_by(df, treat) \%$>$\% dplyr::summarise\_all(list(mean))}, or without piping \texttt{dplyr::summarise\_all(dplyr::group\_by(df, treat), list(mean))}. Pipes let you take the output of one function and send it directly to the next, which is useful when you need to apply multiple transformation to the same data set. Pipes in R look like \%$>$\% and are made available via the \texttt{magrittr} package installed as part of \texttt{dplyr}.}
+
+\item \textcolor{gray}{\textbf{Hint}: Each OPV is the dependent variable in its regression equation. All 10 SLR models have the same covariates. \textbf{Programming Guidance}: To run a SLR use \href{https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/lm}{\texttt{stats::lm( )}} where \texttt{stats} is a package and \texttt{lm( )} is a function that estimates linear-in-parameter models. It is convenient to first create the formula for the model then pass it to \texttt{lm ()}. Example: Declare \texttt{formula $<$- stats::formula(paste(age, ``$\sim$treat''))} to create the formula for a SLR that has \texttt{age} as the dependent variable regressed on a constant and the treatment indicator (printing \texttt{formula} to standard output (stout) yields \texttt{age $\sim$ treat} because the constant is left implicit and present by default). Then pass the formula to \texttt{lm( )} by typing \texttt{lm\_model $<$- lm(formula = formula, data = df)}. To retrieve regression output use \texttt{summary(lm\_model)}, where \href{https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/summary}{\texttt{summary( )}} is available in base R. Example: Retrieve regression coefficients with \texttt{summary(lm\_model)\$coefficients}. To repeat for each OPV, employ a \texttt{for} loop or e.g., \href{https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/lapply}{\texttt{lapply( )}}, see \href{https://www.statology.org/r-loop-through-data-frame-columns/}{here} for an example.}
+\end{enumerate}
+\end{enumerate}
+
+\end{document}
