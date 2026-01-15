@@ -22,26 +22,195 @@ knitr::opts_chunk$set(echo = TRUE, fig.pos = "H", out.extra = "")
 # (\textcolor{blue}{[ \ \ ]} out of 40p) PART I: Review of OLS for Prediction and Description
 
 ## (\textcolor{blue}{[ \ \ ]} out of 22p) Q1: Properties of the OLS Estimator when the CEF is linear-in-parameters
+We assume the CEF is linear:
+$$
+E[Y_i\mid X_i]=\beta_0+\beta_1X_i.
+$$
+Define the error
+$$
+\varepsilon_i:=Y_i-(\beta_0+\beta_1X_i),
+\qquad\Rightarrow\qquad
+E[\varepsilon_i\mid X_i]=0.
+$$
+
+### (i) Closed-form OLS solution
+OLS minimizes $S(b_0,b_1)=\sum_{i=1}^n (Y_i-b_0-b_1X_i)^2$. FOCs:
+\[
+\frac{\partial S}{\partial b_0}=-2\sum (Y_i-b_0-b_1X_i)=0,\qquad
+\frac{\partial S}{\partial b_1}=-2\sum X_i(Y_i-b_0-b_1X_i)=0.
+\]
+From the first FOC, $\hat\beta_0=\bar Y-\hat\beta_1\bar X$. Substituting into the second yields
+\[
+\hat\beta_1=\frac{\sum_{i=1}^n (X_i-\bar X)(Y_i-\bar Y)}{\sum_{i=1}^n (X_i-\bar X)^2},
+\qquad
+\hat\beta_0=\bar Y-\hat\beta_1\bar X.
+\]
+
+### (ii) Unbiasedness
+Using $Y_i=\beta_0+\beta_1X_i+\varepsilon_i$, we can rewrite
+\[
+\hat\beta_1-\beta_1=\frac{\sum_{i=1}^n (X_i-\bar X)\varepsilon_i}{\sum_{i=1}^n (X_i-\bar X)^2}.
+\]
+Condition on $X_1,\ldots,X_n$. The denominator is a function of $X$'s only. For the numerator,
+\[
+E\!\left[\sum (X_i-\bar X)\varepsilon_i \mid X_1,\ldots,X_n\right]
+=\sum (X_i-\bar X)E[\varepsilon_i\mid X_1,\ldots,X_n]
+=\sum (X_i-\bar X)E[\varepsilon_i\mid X_i]=0.
+\]
+Hence $E[\hat\beta_1\mid X_1,\ldots,X_n]=\beta_1$, implying $E[\hat\beta_1]=\beta_1$.
+
+For the intercept, $\hat\beta_0=\bar Y-\hat\beta_1\bar X$. Taking expectations:
+\[
+E[\hat\beta_0]=E[\bar Y]-E[\hat\beta_1]E[\bar X]
+=E[E[Y\mid X]]-\beta_1E[X]
+=E[\beta_0+\beta_1X]-\beta_1E[X]=\beta_0.
+\]
+Therefore both $\hat\beta_1$ and $\hat\beta_0$ are unbiased.
+
+### (iii) Consistency
+Write
+\[
+\hat\beta_1-\beta_1
+=\frac{\frac1n\sum (X_i-\bar X)\varepsilon_i}{\frac1n\sum (X_i-\bar X)^2}.
+\]
+Assume i.i.d. sampling with finite second moments and $Var(X)>0$. By LLN,
+\[
+\frac1n\sum (X_i-\bar X)^2 \xrightarrow{p} Var(X)>0.
+\]
+Also, since $E[\varepsilon\mid X]=0$ implies $E[(X-E[X])\varepsilon]=0$, LLN gives
+\[
+\frac1n\sum (X_i-\bar X)\varepsilon_i \xrightarrow{p} 0.
+\]
+By Slutsky / Continuous Mapping Theorem for ratios, $\hat\beta_1\xrightarrow{p}\beta_1$.
+
+Finally, $\hat\beta_0=\bar Y-\hat\beta_1\bar X$, and by LLN $\bar Y\xrightarrow{p}E[Y]$ and $\bar X\xrightarrow{p}E[X]$. Combining with $\hat\beta_1\xrightarrow{p}\beta_1$ and Slutsky yields $\hat\beta_0\xrightarrow{p}\beta_0$.
+
 
 ---
 
 ## (\textcolor{blue}{[ \ \ ]} out of 2p) Q2: CEF if linear-in-parameters when eVar is binary 0/1
 
+Suppose \(X\in\{0,1\}\). Let
+\[
+\beta_0 := E[Y\mid X=0],
+\qquad
+\beta_1 := E[Y\mid X=1]-E[Y\mid X=0].
+\]
+Then for \(X=0\),
+\[
+\beta_0+\beta_1 X=\beta_0=E[Y\mid X=0],
+\]
+and for \(X=1\),
+\[
+\beta_0+\beta_1 X=\beta_0+\beta_1
+=E[Y\mid X=0]+\big(E[Y\mid X=1]-E[Y\mid X=0]\big)
+=E[Y\mid X=1].
+\]
+Therefore, for all \(X\in\{0,1\}\),
+\[
+E[Y\mid X]=\beta_0+\beta_1 X,
+\]
+so the CEF is linear-in-parameters when the explanatory variable is binary.
+
 ---
 
 ## (\textcolor{blue}{[ \ \ ]} out of 4p) Q3: First Response to Manager
+Hi Alyson,
+
+Thanks for sharing the regression results — they are definitely useful for summarizing how Prime and non-Prime customers differ on average.
+
+That said, it is important to note that this regression is describing the difference in average spending between customers who already have Prime and those who do not. In other words, the coefficient captures a descriptive difference in conditional means, rather than the causal effect of enrolling in Prime for a given customer.
+
+If our goal is to understand the causal impact of Prime enrollment — i.e., how a customer’s spending would change if they were to sign up — we would need additional assumptions or a different research design beyond this simple regression.
+
+Best,  
+Ty
 
 ---
 
 ## (\textcolor{blue}{[ \ \ ]} out of 4p) Q4: Second Response to Manager
+The key issue is that customers who choose to enroll in Prime may differ systematically from those who do not. For example, Prime members may already be more active shoppers or have higher baseline demand, even in the absence of Prime benefits.
+
+As a result, the regression coefficient reflects both the effect of Prime enrollment and these pre-existing differences between the two groups. Without accounting for this selection, the estimated difference in average spending cannot be interpreted as the causal effect of Prime.
 
 ---
 
 ## (\textcolor{blue}{[ \ \ ]} out of 2p) Q5: Properties of a linear-in-parameter CEF
+### If \(E[Y\mid X]=\beta_0+\beta_1X\), then \(Y=\beta_0+\beta_1X+\varepsilon\) with \(E[\varepsilon\mid X=x]=E[\varepsilon]=0\)
+
+Assume the CEF is linear-in-parameters:
+\[
+E[Y\mid X]=\beta_0+\beta_1X.
+\]
+Define the residual (error term)
+\[
+\varepsilon := Y-(\beta_0+\beta_1X).
+\]
+Then, for any \(x\) in the support \(\mathcal{X}\),
+\[
+E[\varepsilon\mid X=x]
+=E[Y-(\beta_0+\beta_1X)\mid X=x]
+=E[Y\mid X=x]-(\beta_0+\beta_1x)
+=(\beta_0+\beta_1x)-(\beta_0+\beta_1x)
+=0.
+\]
+Moreover, by the law of iterated expectations,
+\[
+E[\varepsilon]=E\!\big(E[\varepsilon\mid X]\big)=E[0]=0.
+\]
+Hence \(Y=\beta_0+\beta_1X+\varepsilon\) with \(E[\varepsilon\mid X=x]=E[\varepsilon]=0\) for all \(x\in\mathcal{X}\).
+
+### If \(Y=\beta_0+\beta_1X+\varepsilon\) with \(E[\varepsilon\mid X=x]=0\), then \(E[Y\mid X]=\beta_0+\beta_1X\)
+
+Assume
+\[
+Y=\beta_0+\beta_1X+\varepsilon
+\quad\text{and}\quad
+E[\varepsilon\mid X=x]=0\ \ \forall x\in\mathcal{X}.
+\]
+Taking conditional expectations given \(X\),
+\[
+E[Y\mid X]
+=E[\beta_0+\beta_1X+\varepsilon\mid X]
+=\beta_0+\beta_1X+E[\varepsilon\mid X]
+=\beta_0+\beta_1X.
+\]
+Therefore the CEF is linear-in-parameters.
+
+This establishes the equivalence claimed in Claim 3.
 
 ---
 
 ## (\textcolor{blue}{[ \ \ ]} out of 6p) Q6: Response to Product Manager
+## Q6: Response to Product Manager
+
+### Business-facing numerical example
+
+Consider two types of customers:
+
+- **High-demand customers**: they spend \$100 on average, regardless of whether they have Prime.
+- **Low-demand customers**: they spend \$20 on average, regardless of whether they have Prime.
+
+Assume Prime itself has **no causal effect** on spending. However, high-demand customers are much more likely to enroll in Prime.
+
+Suppose the customer base looks like this:
+- Among Prime users: 80% are high-demand and 20% are low-demand.
+- Among non-Prime users: 20% are high-demand and 80% are low-demand.
+
+Then average spending is:
+- Prime users: \(0.8 \times 100 + 0.2 \times 20 = 84\)
+- Non-Prime users: \(0.2 \times 100 + 0.8 \times 20 = 36\)
+
+A simple regression of spending on a Prime indicator would estimate a difference of \(84 - 36 = 48\), suggesting a large positive “Prime effect.”  
+However, in this example Prime has **zero causal impact** on spending for any customer. The entire difference is driven by the fact that customers who choose Prime already have higher baseline demand.
+
+### Technical interpretation
+
+The regression coefficient identifies the difference in conditional means,
+\[
+E[Y \mid D=1] - E[Y \mid D=0],
+\]
+which combines any causal effect of Prime with pre-existing differences between customers who select into Prime and those who do not. Without additional assumptions or an experimental design, this descriptive difference cannot be interpreted as a causal effect.
 
 ---
 
