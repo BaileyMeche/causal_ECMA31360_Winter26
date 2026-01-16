@@ -306,57 +306,160 @@ which combines any causal effect of Prime with pre-existing differences between 
 
 ---
 
+
 # (\textcolor{blue}{[ \ \ ]} out of 10p bonus) PART III: Description vs Causality - the case of Uber One
 
 ## (\textcolor{blue}{[ \ \ ]} out of 10p bonus) Q11
 
 ## (\textcolor{blue}{[ \ \ ]} out of 5p) Q11.a
 
----
+A question that produces the answer is “Among Uber One members, what is the average dollar amount of savings per month computed from the pricing rules/discounts applied to their eligible transactions?” This is descriptive because it summarizes observed savings for members (a fact about outcomes among members), not what would happen to the same riders if they did not join.
+
 
 ## (\textcolor{blue}{[ \ \ ]} out of 3p) Q11.b
 
----
+
+1. For each member $i$ and month $t$, collect all eligible Uber rides and Uber Eats orders in that month.
+2. For each transaction, compute “savings” as non-member price for that transaction less the member price actually paid, accounting for the program’s discount and fee rules.
+3. Sum savings across transactions for that member-month to get monthly savings $(S_{it})$.
+4. Average $S_{it}$ across member-months in the reporting window to get the “$28 on average every month."
+
+
 
 ## (\textcolor{blue}{[ \ \ ]} out of 2p) Q11.c
 
----
+
+A rider typically wants: “If I join Uber One, how much will my monthly out-of-pocket spending change relative to not joining, given my expected usage?” This is causal because it compares outcomes for the same person under their two alternatives.
+
+
 
 # (\textcolor{blue}{[ \ \ ]} out of 14p) PART IV: A Look at the Data from the NSW Experiment
 
 ## (\textcolor{blue}{[ \ \ ]} out of 14p) Q12: Describe the NSW Data
 
-### (\textcolor{blue}{[ \ \ ]} out of 1p) Q12.a: Description of the Treatment
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q12.a 
 
----
 
-### (\textcolor{blue}{[ \ \ ]} out of 1p) Q12.b: Load and combine the data
+The treatment is the offer/assignment to participate in the NSW subsidized employment cum training program (treatment assignment indicator $\texttt{treat}$).
 
-### Script and Output
 
----
 
-### (\textcolor{blue}{[ \ \ ]} out of 1p) Q12.c: Verify Counts
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q12.b 
 
 ### Script and Output
 
----
+```r
+# Load
+treated <- read.csv("nswre74_treated.csv")
+control <- read.csv("nswre74_control.csv")
 
-### (\textcolor{blue}{[ \ \ ]} out of 4p) Q12.d: Compute Sample Averages
+# Combine (stack rows)
+df <- rbind(treated, control)
+```
+Output:
+```text
+> summary(df)
+     treat             age             edu           black             hisp        
+ Min.   :0.0000   Min.   :17.00   Min.   : 3.0   Min.   :0.0000   Min.   :0.00000  
+ 1st Qu.:0.0000   1st Qu.:20.00   1st Qu.: 9.0   1st Qu.:1.0000   1st Qu.:0.00000  
+ Median :0.0000   Median :24.00   Median :10.0   Median :1.0000   Median :0.00000  
+ Mean   :0.4157   Mean   :25.37   Mean   :10.2   Mean   :0.8337   Mean   :0.08764  
+ 3rd Qu.:1.0000   3rd Qu.:28.00   3rd Qu.:11.0   3rd Qu.:1.0000   3rd Qu.:0.00000  
+ Max.   :1.0000   Max.   :55.00   Max.   :16.0   Max.   :1.0000   Max.   :1.00000  
+    married          nodegree          re74              re75            re78      
+ Min.   :0.0000   Min.   :0.000   Min.   :    0.0   Min.   :    0   Min.   :    0  
+ 1st Qu.:0.0000   1st Qu.:1.000   1st Qu.:    0.0   1st Qu.:    0   1st Qu.:    0  
+ Median :0.0000   Median :1.000   Median :    0.0   Median :    0   Median : 3702  
+ Mean   :0.1685   Mean   :0.782   Mean   : 2102.3   Mean   : 1377   Mean   : 5301  
+ 3rd Qu.:0.0000   3rd Qu.:1.000   3rd Qu.:  824.4   3rd Qu.: 1221   3rd Qu.: 8125  
+ Max.   :1.0000   Max.   :1.000   Max.   :39570.7   Max.   :25142   Max.   :60308  
+      u74              u75        
+ Min.   :0.0000   Min.   :0.0000  
+ 1st Qu.:0.0000   1st Qu.:0.0000  
+ Median :1.0000   Median :1.0000  
+ Mean   :0.7326   Mean   :0.6494  
+ 3rd Qu.:1.0000   3rd Qu.:1.0000  
+ Max.   :1.0000   Max.   :1.0000 
+ ```
+ 
+
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q12.c 
 
 ### Script and Output
 
----
+```r
+> dplyr::tally(dplyr::group_by(df, treat))
+# A tibble: 2 × 2
+  treat     n
+  <int> <int>
+1     0   260
+2     1   185
+```
 
-### (\textcolor{blue}{[ \ \ ]} out of 5p) Q12.e: Test Equality of Means Across Treated and Control
 
+
+### (\textcolor{blue}{[ \ \ ]} out of 4p) Q12.d 
 ### Script and Output
 
+```r
+vars <- c("age","edu","nodegree","black","hisp","married","u74","u75","re74","re75","re78","treat")
+
+df %>%
+  select(all_of(vars)) %>%
+  group_by(treat) %>%
+  summarise_all(list(mean))
+  
+# A tibble: 2 × 12
+  treat   age   edu nodegree black   hisp married   u74   u75  re74  re75  re78
+  <int> <dbl> <dbl>    <dbl> <dbl>  <dbl>   <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+1     0  25.1  10.1    0.835 0.827 0.108    0.154 0.75  0.685 2107. 1267. 4555.
+2     1  25.8  10.3    0.708 0.843 0.0595   0.189 0.708 0.6   2096. 1532. 6349.
+```
+
+
+
+### (\textcolor{blue}{[ \ \ ]} out of 5p) Q12.e 
+
+### Script and Output
+```r
+results <- lapply(opvs, function(dep){
+  formula <- stats::formula(paste(dep, "~ treat"))
+  lm_model <- stats::lm(formula = formula, data = df)
+  coefs <- summary(lm_model)$coefficients
+  data.frame(
+    var = dep,
+    est = coefs["treat","Estimate"],
+    t   = coefs["treat","t value"],
+    p   = coefs["treat","Pr(>|t|)"],
+    row.names = NULL
+  )
+})
+
+results_df <- do.call(rbind, results)
+results_df$reject_5pct <- results_df$p < 0.05
+> results_df
+        var          est           t           p reject_5pct
+1       age   0.76237006  1.11661493 0.264764269       FALSE
+2       edu   0.25748441  1.49582552 0.135411167       FALSE
+3  nodegree  -0.12650728 -3.21531660 0.001398352        TRUE
+4     black   0.01632017  0.45477598 0.649493182       FALSE
+5      hisp  -0.04823285 -1.77566909 0.076473893       FALSE
+6   married   0.03534304  0.98043187 0.327408105       FALSE
+7       u74  -0.04189189 -0.98286779 0.326208987       FALSE
+8       u75  -0.08461538 -1.84662032 0.065468962       FALSE
+9      re74 -11.45295788 -0.02217511 0.982318253       FALSE
+10     re75 265.14629853  0.87462144 0.382253831       FALSE
+```
 ### Commentary
 
----
+At the 5% level, only $\texttt{nodegree}$ shows evidence of imbalance between treated and control groups. The remaining 9 predetermined covariates do not show statistically significant differences in means at 5%, though $\texttt{u75}$ and $\texttt{hisp}$ are closer to conventional thresholds (p-values around 0.06–0.08). Overall, the RA appears broadly consistent with balance in observed covariates, with a notable exception for $\texttt{nodegree}$.
 
-### (\textcolor{blue}{[ \ \ ]} out of 2p) Q12.f: Lay-person description of the Sample
 
----
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q12.f 
+
+This dataset comes from a job-training experiment in the mid-1970s where eligible men were randomly assigned either to be offered a subsidized employment and training program (185 people) or not offered it (260 people). We observe their background characteristics measured before assignment (such as age, education, race/ethnicity, marital status, prior unemployment, and prior earnings) and their earnings in 1978, about a year after the program.
+
+
 
