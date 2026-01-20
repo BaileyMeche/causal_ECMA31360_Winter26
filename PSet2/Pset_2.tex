@@ -1,0 +1,327 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ECMA 31360 PSet 2: Causal Inference with Data from RCT 
+% Author: Melissa Tartari
+% Created: 01/05/2020
+% Last Updated: 1/17/2026
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{article}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{color}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\setcounter{MaxMatrixCols}{10}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{acknowledgement}[theorem]{Acknowledgement}
+\newtheorem{algorithm}[theorem]{Algorithm}
+\newtheorem{axiom}[theorem]{Axiom}
+\newtheorem{case}[theorem]{Case}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{conclusion}[theorem]{Conclusion}
+\newtheorem{condition}[theorem]{Condition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{criterion}[theorem]{Criterion}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{exercise}[theorem]{Exercise}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{notation}[theorem]{Notation}
+\newtheorem{problem}[theorem]{Problem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{solution}[theorem]{Solution}
+\newtheorem{summary}[theorem]{Summary}
+\newenvironment{proof}[1][Proof]{\textbf{#1.} }{\ \rule{0.5em}{0.5em}}
+
+\usepackage{soul}
+\usepackage[skins,breakable]{tcolorbox}
+\usepackage{bm}
+\newtcolorbox{mybox}[1][]{enhanced jigsaw,breakable,pad at break=1mm,
+left=0mm,interior hidden,colframe=Maroon,nobeforeafter=,#1}
+
+% Define a reusable inline box style
+\tcbset{
+  myinline/.style={
+    on line, % Makes the box inline
+    boxrule=0.2mm, % Border thickness
+    colframe=Orchid!80, % Border color
+    colback=Orchid!80, % Background color
+    coltext=white, % Text color
+    sharp corners, % No rounded corners
+    boxsep=-4pt, % Padding inside the box
+    left=4pt,
+    right=6pt
+  }
+}
+
+% Define a reusable inline box style
+\tcbset{
+  myinline2/.style={
+    on line, % Makes the box inline
+    boxrule=0.2mm, % Border thickness
+    colframe=SkyBlue!80, % Border color
+    colback=SkyBlue!80, % Background color
+    coltext=white, % Text color
+    sharp corners, % No rounded corners
+    boxsep=-4pt, % Padding inside the box
+    left=4pt,
+    right=6pt
+  }
+}
+
+%%%%%%%%%%%%%%%%%%%%% to skip an item in enumerate and advance the counter
+\makeatletter
+\newcommand{\optionalitemcount}[2]{%
+  \ifnum#1=1
+    \item #2%
+  \else
+    \stepcounter{\@enumctr}% advance the current enumerate counter silently
+  \fi
+}
+\makeatother
+
+
+\textwidth=7.6in
+\textheight=9.9in
+\topmargin=-1.2in
+\headheight=0in
+\headsep=.5in
+\hoffset  -1.25in
+
+\newcommand{\psetyear}{2026}
+\newcommand{\psetnum}{2}
+\newcommand{\previouspsetnum}{1}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy} 
+\fancyhf{} % clear all header and footer fields
+\fancyfoot[R]{\color{Gray}{ECMA 31360 PSet \psetnum, Page \thepage}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Main Document
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\title{ECMA 31360, PSet \psetnum: Causal Inference with Data from a Randomized Controlled Trial}
+\date{}
+\author{Melissa Tartari, University of Chicago}
+\maketitle
+\thispagestyle{fancy}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Part 1
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{center}
+{\LARGE Part 1: Testing Balance in Observed Predetermined Variables (50 p)}
+\end{center}
+
+\noindent \textcolor{Maroon}{\textbf{Learning Objectives}: Learn how to test balance in observed predetermined variables (OPVs) using data from a randomized controlled trial (RCT) with \textcolor{ForestGreen}{unconditional random assignment (URA)} via a variety of approaches.}
+
+
+
+\begin{enumerate}[label=\textbf{Q\arabic{enumi}}.,ref=Q\arabic{enumi}, wide=0pt, itemsep=1em, topsep=5pt, resume]
+
+%%%%%%%%%%%%%%%
+\item (15p) Read and understand \texttt{Canvas/Files/Articles-Companions/Companion-to-NSW-Application.pdf}. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item (23p) Use the NSW experimental dataset (see \textbf{PSet\previouspsetnum}). Implement \tcbox[myinline]{Procedure 4} to test balance with respect to the 10 OPVs. Specifically:
+
+\begin{enumerate}[wide, labelindent=0pt]
+\item (10p) Estimate the parameters of the relevant SUR system: $\boldsymbol{\pi} = \{ \pi_{0,j},\pi_{1,j}\}_{j=1}^{10}$.
+\item (1p) Compare estimates and their SEs to those obtained in \textbf{PSet\previouspsetnum} via OLS equation-by-equation. Briefly elaborate.
+\item (3p) Expression (\ref{eq:sur-4by4block}) represents the top-left $4\times 4$ block of the estimated variance-covariance matrix for the SUR estimator $\hat{\boldsymbol{\pi}}$. Why is it the case that (i) $ \widehat{Cov}[\hat{\pi}_{0,1},\hat{\pi}_{1,1}]  = - \widehat{Var}[\hat{\pi}_{0,1}]$; (ii) $\widehat{Cov}[\hat{\pi}_{0,1},\hat{\pi}_{1,2}] =- \widehat{Cov}[\hat{\pi}_{0,1},\hat{\pi}_{0,2}] $; (iii) $\widehat{Cov}[\hat{\pi}_{0,1},\hat{\pi}_{1,2}] = \widehat{Cov}[\hat{\pi}_{1,1},\hat{\pi}_{0,2}]$?
+\begin{equation}\label{eq:sur-4by4block}
+\text{Top-left $4 \times 4$ block} =
+\begin{bmatrix}
+\widehat{Var}[\hat{\pi}_{0,1}] & \widehat{Cov}[\hat{\pi}_{0,1},\hat{\pi}_{1,1}] & \widehat{Cov}[\hat{\pi}_{0,1},\hat{\pi}_{0,2}] & \widehat{Cov}[\hat{\pi}_{0,1},\hat{\pi}_{1,2}] \\
+\widehat{Cov}[\hat{\pi}_{1,1},\hat{\pi}_{0,1}] & \widehat{Var}[\hat{\pi}_{1,1}]& \widehat{Cov}[\hat{\pi}_{1,1},\hat{\pi}_{0,2}] & \widehat{Cov}[\hat{\pi}_{1,1},\hat{\pi}_{1,2}] \\
+\widehat{Cov}[\hat{\pi}_{0,2},\hat{\pi}_{0,1}] & \widehat{Cov}[\hat{\pi}_{0,2},\hat{\pi}_{1,1}] & \widehat{Var}[\hat{\pi}_{0,2}] & \widehat{Cov}[\hat{\pi}_{0,2},\hat{\pi}_{1,2}] \\
+\widehat{Cov}[\hat{\pi}_{1,2},\hat{\pi}_{0,1}] & \widehat{Cov}[\hat{\pi}_{1,2},\hat{\pi}_{1,1}] & \widehat{Cov}[\hat{\pi}_{1,2},\hat{\pi}_{0,2}] & \widehat{Var}[\hat{\pi}_{1,2}]
+\end{bmatrix}.
+\end{equation}
+
+\item (4p) Manually (still in R) test the \textcolor{ForestGreen}{joint hypothesis} that the coefficients of \texttt{treat} are zero in all the equations of the system.\label{item:sur-test-eqmeans-manual} 
+
+\item (4p) Automate the test run in \textbf{\ref{item:sur-test-eqmeans-manual}}. 
+
+\item (1p) What decision do you reach when $\alpha=5\%$? 
+
+\end{enumerate}
+
+\item (3p) Implement \tcbox[myinline]{Procedure 5} (Hotelling's T2 test). What decision do you reach when $\alpha=5\%$? 
+
+\item (4p) Implement \tcbox[myinline]{Procedure 6} (Composite Balance Score). What decision do you reach when $\alpha=5\%$?\label{item:balance_test:predict_treat} 
+
+\item (5p) Implement \tcbox[myinline]{Procedure 7} (Bonferroni) and \tcbox[myinline]{Procedure 8} (Bonferroni-Holm). Comment on your findings when $\alpha=5\%$.
+\end{enumerate}
+\medskip
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Part 2
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{center}
+{\LARGE Part 2: Estimating the Effect of the NSW Intervention (50 p)}
+\end{center}
+
+\noindent \textcolor{Maroon}{\textbf{Learning Objectives}: Learn how to estimate the \textcolor{ForestGreen}{average treatment effect} (ATE) of receiving a training offer on post-intervention earnings (\texttt{re78}) using the approaches listed in Table \ref{tab:ate-specs}.
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Spec} & \textbf{Estimator} & \textbf{Description} \\ \hline
+1 & DM & Estimate by OLS the parameters of a simple linear regression model (SLRM) \\ \hline
+2 & Adjusted DM & Add to spec. 1 OPVs \texttt{nodegree} and \texttt{edu} in linear form \\ \hline
+3 & Adjusted DM & Add to spec. 2 the other 8 OPVs in linear form \\ \hline
+4 & Adjusted DM & Add to spec. 3 the interaction between \texttt{age} (in deviation from its sample mean) and \texttt{treat} \\ \hline
+\end{tabular}
+\caption{Specifications used to estimate the ATE of the offer of training. ``DM'' stands for Difference-in-Means.}
+\label{tab:ate-specs}
+\end{table}
+}
+
+\begin{enumerate}[label=\textbf{Q\arabic{enumi}}.,ref=Q\arabic{enumi}, wide=0pt, itemsep=1em, topsep=5pt, resume]
+%%%%%%%%%%%%%%%%%
+\item (3p) Implement \tcbox[myinline2]{Specification 1} and manually (still in R) verify that the OLS estimator of the slope coefficient equals the difference in average earnings in 1978 between the treated and control subsamples. Describe your findings.\label{item:oot:two-ways}
+
+%%%%%%%%%%%%%%%%%
+\item (4p) In light of the imbalance in OPVs documented in Part 1, you may consider assuming that the NSW treatment is assigned randomly conditional on having a degree. Estimate a fully saturated specification in \texttt{nodegree}, that is, regress $\texttt{re78}_i$  on $(\texttt{nodegree}_i, (1-\texttt{nodegree}_i),  D_i \times \texttt{nodegree}_i ,  D_i \times (1 - \texttt{nodegree}_i)$ (don't include a constant) with parameters $( \alpha_1,  \alpha_2, \rho_1,\rho_2)$. What is the estimate of the $CATE$ for individuals with and without a degree? What is the estimate of ATE?\label{item:nsw:fully-sat-nodegree}
+
+%%%%%%%%%%%%%%%%%
+\item (2p) In \textbf{\ref{item:nsw:fully-sat-nodegree}} you took an extra step to get an estimate of ATE. Run a specification that directly delivers such estimate.
+
+%%%%%%%%%%%%%%%%%
+\item (22p) In the NSW application, the only OPV with significant imbalance is the binary 0/1 variable \texttt{nodegree}. You may, however, encounter situations in which the OPV with significant imbalance takes many values --- perhaps even too many (relative to sample size) to feasibly implement a fully saturated specification. More generally, you may encounter several imbalanced OPVs.\footnote{Or, when using observational data, you may be willing to assume that CIA and COC hold only conditionally on many OPVs and/or OPVs that take many values.} In such situations, a common shortcut is to include (some of the) OPVs as regression covariates \emph{without} interacting them with the treatment indicator. When the OPVs are discrete, this amounts to including group indicators for the values of the OPVs, a specification that in econometrics is referred to as a model with \textcolor{ForestGreen}{group fixed effects}. 
+
+\textbf{Claim \ref{cl:bias-from-adding-covariates}} considers a simplified setting in which there is a single OPV taking $M$ distinct values and characterizes the implications of using this fixed-effects shortcut instead of employing a fully saturated specification. Prove the claim (20p) and describe in plain English what you have learned from it (2p).\\
+
+
+\begin{mybox}
+\begin{claim}\label{cl:bias-from-adding-covariates}
+Consider the RCM framework and assume that CIA and COC hold with reference to the OPV $x_i$, which takes values in $\{a_1,\ldots,a_M\}$. Let $s_m$ denote the share of the population with $x_i=a_m$. You have data for a random sample $\{(Y_i,x_i,D_i) \mid i=1,\ldots,N\}$. Let $\hat{s}_m$ denote the fraction of sample units with $x_i=a_m$. Let $\bar{Y}_{1,m}$ denote the average of $Y_i$ in the treated subsample with $x_i=a_m$ and, similarly, $\bar{Y}_{0,m}$ denote the average of $Y_i$ in the control subsample with $x_i=a_m$. Estimate by OLS the parameters of the following two regression specifications:
+\begin{align}
+\text{Regress} \quad Y_i & \quad \text{on} \quad \Big(\{1[x_i=a_m]\}_{m=1}^M,\{D_i1[x_i=a_m]\}_{m=1}^M \Big) \quad \text{with parameters} \quad (\alpha_1,\ldots,\alpha_M,\rho_1,\ldots,\rho_M);\label{eq:fully_spec} \\
+\text{Regress} \quad Y_i & \quad \text{on} \quad \Big(\{1[x_i=a_m]\}_{m=1}^M, D_i \Big) \quad \text{with parameters} \quad (\theta_1,\ldots,\theta_M,\rho).\label{eq:reduced_spec}
+\end{align}
+
+Define the estimator of ATE based on specification (\ref{eq:fully_spec}) (i.e., the \textcolor{ForestGreen}{fully saturated specification}) as:
+\begin{equation}\label{eq:fully_spec_ate}
+\widehat{ATE} := \sum_{m=1}^M\hat{s}_m \hat{\rho}_m.
+\end{equation}
+Then:
+\begin{enumerate}
+\item (6p) The OLS estimator of $\rho$ in (the ``shortcut'') specification (\ref{eq:reduced_spec}) has the form:
+\begin{equation}\label{eq:reduced_spec_ate}
+\widehat{\rho} = \sum_{m=1}^M \hat{\omega}_m \bigl( \bar{Y}_{1,m} - \bar{Y}_{0,m} \Bigr),
+\end{equation}
+with:
+\begin{equation}
+\hat{\omega}_m = \frac{\hat{s}_m\widehat{Var}[D_i \mid x_i=a_m]}{\sum_{j=1}^M \hat{s}_j\widehat{Var}[D_i \mid x_i=a_j]}.
+\end{equation}
+\item (2p) $\hat{\rho}$ in (\ref{eq:reduced_spec_ate}) equals $\widehat{ATE}$ in (\ref{eq:fully_spec}) only when either of two conditions hold:
+\begin{enumerate}
+\item (1p) the shares of treated units is identical across subsamples defined based on the value of $x_i$;
+\item (1p) the estimates of CATE are identical across subsamples defined based on the value of $x_i$.
+\end{enumerate}
+\item (8p) $\hat{\rho}$ is a consistent estimator of ${ATE}$ only when treatment effects are homogeneous in $x_i$ \underline{or} the assignment probabilities do not depend on $x_i$.
+\item (6p) If the sample is evenly split across values of $x_i$, then $\widehat{ATE}$ gives the same weight to each estimate of CATE (1p). If \underline{\textbf{also}} $Var[Y_{i}(0) \mid x_i=a_m]=Var[Y_{i}(1) \mid x_i=a_m] \ \forall m$ (i.e., TEs are homoskedastic within each sub-population) --- denote this common value by $\sigma_m^2$, then  $\hat{\rho}$ gives more weight to the most precisely estimated CATEs (5p).
+\end{enumerate}
+\end{claim}
+\end{mybox}
+\newpage
+%%%%%%%%%%%%%%%%%
+\item (14p) \tcbox[myinline2]{Specification 2} through \tcbox[myinline2]{Specification 4} are examples of the \textcolor{ForestGreen}{regression adjustment approach}. For example, you may consider implementing \tcbox[myinline2]{Specification 2} in light of the imbalance in educational attainment documented in Part 1: standard models of human capital formation and wage determination imply that educational attainment is one of the determinants of human capital hence of labor market productivity, which in turn is one of the determinants of wages hence earnings. Imbalance in OPVs flags the possible presence of \textcolor{ForestGreen}{observable confounders}. Regression adjustment is a parsimonious and parametric approach that attempts to account for the presence of observable confounders.
+
+\begin{enumerate}[wide, labelindent=0pt]
+
+\item (3p) Report the estimates of the ATE and test the null hypothesis $H_0$ that ATE is zero versus the alternative hypothesis $H_1$ that it is different from zero. 
+
+\item (5p) Are there reasons to add OPVs as regression covariates when they are balanced across treatment and control groups? If so, what are they? Comment on the estimation results from \tcbox[myinline2]{Specification 2} and \tcbox[myinline2]{Specification 3}.
+
+\item (1p) With reference to \tcbox[myinline2]{Specification 3}, do you think that it is problematic to use lagged / past values of the dependent variable as regression covariates? Explain.
+
+\item (5p) Are there reasons to add interactions between OPVs and the treatment indicator? If so, what are they? With reference to \tcbox[myinline2]{Specification 4}, test the following two hypotheses, one-at-a-time: i) the ATE is zero; ii) the effect of the offer of training does not vary by the age of the subject. 
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%
+\item (5p) Write a short paragraph describing a plausible mechanism underlying the estimated ATE of being offered training. \label{item:oot:ate-vs-ite}
+
+\end{enumerate}
+
+
+
+%%%%%%%%%%%%%%%%%%%%% Guidance
+\medskip
+\begin{center}
+{\LARGE Guidance}
+\end{center}
+
+\hl{Before answering the questions that use the NSW data in a regression specification, divide \texttt{re74} and \texttt{re75} by $1{,}000$; this avoids working with OPVs that have vastly different scales.}
+
+%%%%%%%%%%%%%%%%%%%%%%% Part 1
+\begin{enumerate}[label=\textbf{Q\arabic{enumi}}.,ref=Q\arabic{enumi}, wide=0pt, itemsep=1em, topsep=5pt]
+
+\item \textcolor{gray}{\textbf{Note}: In PSet\previouspsetnum\ you tested equal means for the 10 OPVs present in the NSW experimental data using equation-by-equation OLS, which is called \tcbox[myinline]{Procedure 1} in the companion document. The companion document helps you understand that doing so is problematic because of the \href{https://en.wikipedia.org/wiki/Multiple_comparisons_problem}{\textcolor{ForestGreen}{``multiple comparisons''}} or \textcolor{ForestGreen}{``multiple testing'' problem}. The same document presents alternative testing procedures that obviate the problem. Subsequent questions in this part of the PSet have you implement them using the NSW experimental data.}
+
+%%%%%
+\item Here is the guidance:
+\begin{enumerate}
+\item \textcolor{gray}{\textbf{Programming guidance}: Use \texttt{systemfit::systemfit()}, where \texttt{systemfit} is both the name of the R package and of the function. The vignette is \href{https://cran.r-project.org/web/packages/systemfit/vignettes/systemfit.pdf}{here}, go directly to Section 4.1 and 4.2. Implementation takes 3 steps: 1) collect the 10 formulas in a list (create each formula with \texttt{stats::formula()}); 2) pass the list to \texttt{systemfit::systemfit()}, specifying \texttt{method = ``SUR''}; 3) summarize the output using \texttt{summary( )}. Example: If your list of formulas is named \texttt{sur\_system}, you type \texttt{sur\_fit $<$- systemfit::systemfit(formula = sur\_system, data = df, method = ``SUR")} then \texttt{summary(sur\_fit)}.}
+
+\optionalitemcount{0}{Second guidance (hidden but still counts)}
+
+\optionalitemcount{0}{Second guidance (hidden but still counts)}
+
+\item \textcolor{gray}{\textbf{Hint}: Using the expressions given in the companion document, compute the value of the $F$ test statistic and compute its p-value (1p each) as well as the value of the $S$ (aka Wald) test statistic and its p-value (1p each).}
+
+\item \textcolor{gray}{\textbf{Programming guidance}: Use \texttt{car::linearHypothesis()} to compute the value of the $F$ test statistic and its p-value (1p each) as well as the value of the $S$ (aka Wald) test statistic and its p-value (1p each). You know that you are doing this task correctly if these values coincide with those in \textbf{\ref{item:sur-test-eqmeans-manual}}.}
+
+\optionalitemcount{0}{Second guidance (hidden but still counts)}
+
+\end{enumerate}
+
+%%%%%
+\item \textcolor{gray}{\textbf{Programming guidance}: You may directly leverage \href{https://search.r-project.org/CRAN/refmans/DescTools/html/HotellingsT.html}{\texttt{DescTools::HotellingsT2Test()}}, that is, you are not expected to manually implement the testing procedure by yourself.}
+
+%%%%%
+\item \textcolor{gray}{\textbf{Hint:} Use a multi-variate linear regression model (MLRM) with \textbf{only} linear terms for the 10 OPVs. Spell out null and alternative hypotheses. Use the \textcolor{ForestGreen}{F-test for the overall significance of the regression}, namely $F=\frac{R^2/K}{(1-R^2)/(n-(K+1))}$ with $K=10$. \textbf{Programming guidance}: First implement the test manually (still in R). Then, confirm your results by leveraging \texttt{summary()} after estimation, e.g., \texttt{summary(lm\_fit)\$fstatistic} returns the test's value and degrees of freedom. The p-value for the F-test of overall significance of a regression is not directly stored in the \texttt{summary(lm\_fit)} object, use \href{https://stat.ethz.ch/R-manual/R-devel/library/stats/html/Fdist.html}{\texttt{stats::pf()}} to compute the test's p-value. }
+
+%%%%%
+\item  \textcolor{gray}{\textbf{Programming guidance}: For both procedures you may directly leverage \href{https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/p.adjust}{\texttt{stats::p.adjust()}}, that is, you are not expected to manually implement the testing procedure by yourself.}
+
+%%%%%%%%%%%%%%%%%%%%%%% Part 2
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+\item \textcolor{gray}{\textbf{Programming Guidance:} To test $H_0$ that ATE is zero in specification 1 you may apply \texttt{summary()} on the object returned by \texttt{stats::lm()} or extract such information from that object in any other way of your choosing.}
+
+%%%%%%
+\item \textcolor{gray}{\textbf{Hint:} Use the relevant specification given in \texttt{CAUS\_2\_RCM.pdf}.}
+
+%%%%%%
+\item \textcolor{gray}{\textbf{Hint:} Use the relevant specification given in \texttt{CAUS\_2\_RCM.pdf}.}
+
+%%%%%%
+\item \textcolor{gray}{\textbf{Hint}: Leverage the \textcolor{ForestGreen}{partialling out interpretation of OLS} in a multivariate regression model to write the analytical expression of $\hat{\rho}$, go from there. Note: $Var[D_i \mid x_i=a_m]=\Pr(D_i=1 \mid x_i=a_m)\left(1- \Pr(D_i=1 \mid x_i=a_m)\right)$, hence a ``natural'' estimator of this variance is $\bar{D}_m(1-\bar{D}_m)$, where $\bar{D}_m$ denotes the sample proportion of treated in subsample with $x_i=a_m$.}
+
+%%%%%%%
+\item \textcolor{gray}{\textbf{Note}: These specifications are an even more restrictive version of specification (\ref{eq:reduced_spec_ate}), here the OPVs are entered linearly because they take many values, making fully saturated specifications infeasible in practice.}
+\begin{enumerate}
+\item \textcolor{gray}{\textbf{Hint:} \tcbox[myinline2]{Specification 3} has 11 regression covariates. \tcbox[myinline2]{Specification 4} has 12 regression covariates.}
+\optionalitemcount{0}{Second guidance (hidden but still counts)}
+\optionalitemcount{0}{Second guidance (hidden but still counts)}
+\item \textcolor{gray}{\textbf{Note:} If additional assumptions are needed to carry out i) and ii), state them. \textbf{Programming Guidance}: Use \href{https://rdrr.io/cran/car/man/linearHypothesis.html}{\texttt{car::linearHypothesis()}}.}
+\end{enumerate}
+
+%%%%%%%
+\item \textcolor{gray}{\textbf{Hint:} Think of the possible pathways through which employment \textit{cum} on-the-job training may cause an increase in post-intervention earnings. A well-written paragraph suffices.}
+
+
+\end{enumerate}
+
+
+\end{document}
