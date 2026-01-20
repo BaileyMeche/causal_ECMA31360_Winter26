@@ -32,33 +32,233 @@ knitr::opts_chunk$set(echo = TRUE, fig.pos = "H", out.extra = "")
 
 ## (\textcolor{blue}{[ \ \ ]} out of 15p) Q1: Read and Understand the NSW Application's Companion Document
 
-<!-- Just write DONE -->
+Done!
 
 ---
 
 ## (\textcolor{blue}{[ \ \ ]} out of 23p) Q2: Implement Procedure 4 (SUR Estimation followed by Joint Testing)
 
 ### (\textcolor{blue}{[ \ \ ]} out of 10p) Q2.a: SUR Estimation
+```{r}
+# Load packages
+library(systemfit)
+
+# Load data and create treatment indicator
+treated <- read.csv("nswre74_treated.csv")
+control <- read.csv("nswre74_control.csv")
+treated$treat <- 1
+control$treat <- 0
+df <- rbind(treated, control)
+
+# OPVs
+opvs <- c("age","edu","nodegree","black","hisp",
+          "married","u74","u75","re74","re75")
+
+# SUR system: one equation per OPV
+sur_system <- setNames(
+  lapply(opvs, function(v) as.formula(paste(v, "~ treat"))),
+  opvs
+)
+
+# Estimate SUR (FGLS)
+sur_fit <- systemfit(sur_system, data = df, method = "SUR")
+
+summary(sur_fit)
+
+```
+
 
 ### Script and Output
+We estimate a 10-equation SUR system where each OPV is regressed on the treatment indicator.
+The intercept in each equation equals the control-group mean of that OPV, and the coefficient on treat equals the treated–control difference in means.
+The estimated residual covariance/correlation matrices show substantial cross-equation dependence for economically related OPVs (e.g., u74–u75, re74–re75, edu–nodegree), which motivates using SUR and is required for the joint balance test in subsequent questions.
 
 ---
 
 ### (\textcolor{blue}{[ \ \ ]} out of 1p) Q2.b: Compare FGLS to OLS equation-by-equation
+```{r}
+# Q2.b: OLS equation-by-equation (for comparison)
+ols_fits <- lapply(opvs, function(v) lm(as.formula(paste0(v, " ~ treat")), data = df))
+names(ols_fits) <- opvs
 
+# Compare treat coefficients
+sapply(ols_fits, function(m) coef(m)["treat"])
+coef(sur_fit)[grep("treat", names(coef(sur_fit)))]
+
+```
+Since each equation has the same regressors (an intercept term and a common treatment indicator), the point estimates from SUR/FGLS are the same as those from OLS for each equation (i.e., the estimated mean differences between the treatment and control groups are the same). The key advantage of SUR is that it can estimate the full cross-equation variance-covariance structure, which is necessary for conducting joint balance tests across different OPVs (and may lead to different systematic standard errors for linear combinations of the coefficients).
 ---
 
 ### (\textcolor{blue}{[ \ \ ]} out of 3p) Q2.c: Take a closer look at the variance-covariance matrix
 
 ### Script and Output
+```{r q2c-verify, echo=TRUE}
+V_hat <- vcov(sur_fit)
+nm <- names(coef(sur_fit))
+nm[1:4]  # should look like: age_(Intercept), age_treat, edu_(Intercept), edu_treat
+
+i01 <- 1  # pi0,1
+i11 <- 2  # pi1,1
+i02 <- 3  # pi0,2
+i12 <- 4  # pi1,2
+
+# (i) should be ~ 0
+V_hat[i01, i11] + V_hat[i01, i01]
+
+# (ii) should be ~ 0
+V_hat[i01, i12] + V_hat[i01, i02]
+
+# (iii) should be ~ 0
+V_hat[i01, i12] - V_hat[i11, i02]
+
+```
+We estimate, for each OPV $j=1,\ldots,10$, the regression
+\[
+X_{ij} = \pi_{0,j} + \pi_{1,j} D_i + u_{ij},
+\]
+where $D_i \in \{0,1\}$ is the treatment indicator. Because the regressor is only an intercept and a binary variable, the OLS (and hence the equation-by-equation component of the SUR estimator) admits a simple "group-mean" representation:
+\[
+\widehat{\pi}_{0,j} = \bar X_{j,0}, 
+\qquad
+\widehat{\pi}_{1,j} = \bar X_{j,1} - \bar X_{j,0},
+\]
+where
+\[
+\bar X_{j,0} := \frac{1}{n_0}\sum_{i:D_i=0} X_{ij},
+\qquad
+\bar X_{j,1} := \frac{1}{n_1}\sum_{i:D_i=1} X_{ij}.
+\]
+Thus, $\widehat{\pi}_{0,j}$ is the control-group mean of OPV $j$, and $\widehat{\pi}_{1,j}$ is the treated--control difference in means for OPV $j$.
+
+Expression (1) is the top-left $4\times 4$ block of $\widehat{\mathrm{Var}}(\widehat{\pi})$ for the parameter vector
+\[
+(\widehat{\pi}_{0,1},\widehat{\pi}_{1,1},\widehat{\pi}_{0,2},\widehat{\pi}_{1,2})'.
+\]
+The following equalities follow directly from the above identities and the (approximate) independence between the treated and control subsamples implied by unconditional random assignment (URA).
+
+\paragraph{(i) Why is $\widehat{\mathrm{Cov}}[\widehat{\pi}_{0,1},\widehat{\pi}_{1,1}] = -\widehat{\mathrm{Var}}[\widehat{\pi}_{0,1}]$?}
+Using $\widehat{\pi}_{0,1}=\bar X_{1,0}$ and $\widehat{\pi}_{1,1}=\bar X_{1,1}-\bar X_{1,0}$,
+\[
+\widehat{\mathrm{Cov}}(\widehat{\pi}_{0,1},\widehat{\pi}_{1,1})
+= \widehat{\mathrm{Cov}}\!\left(\bar X_{1,0},\,\bar X_{1,1}-\bar X_{1,0}\right)
+= \widehat{\mathrm{Cov}}(\bar X_{1,0},\bar X_{1,1}) - \widehat{\mathrm{Var}}(\bar X_{1,0}).
+\]
+Under URA, $\bar X_{1,0}$ and $\bar X_{1,1}$ are based on non-overlapping subsamples and are approximately independent, hence
+$\widehat{\mathrm{Cov}}(\bar X_{1,0},\bar X_{1,1}) \approx 0$.
+Therefore,
+\[
+\widehat{\mathrm{Cov}}(\widehat{\pi}_{0,1},\widehat{\pi}_{1,1})
+= -\widehat{\mathrm{Var}}(\bar X_{1,0})
+= -\widehat{\mathrm{Var}}(\widehat{\pi}_{0,1}).
+\]
+
+\paragraph{(ii) Why is $\widehat{\mathrm{Cov}}[\widehat{\pi}_{0,1},\widehat{\pi}_{1,2}] = -\widehat{\mathrm{Cov}}[\widehat{\pi}_{0,1},\widehat{\pi}_{0,2}]$?}
+Using $\widehat{\pi}_{0,1}=\bar X_{1,0}$ and $\widehat{\pi}_{1,2}=\bar X_{2,1}-\bar X_{2,0}$,
+\[
+\widehat{\mathrm{Cov}}(\widehat{\pi}_{0,1},\widehat{\pi}_{1,2})
+= \widehat{\mathrm{Cov}}\!\left(\bar X_{1,0},\,\bar X_{2,1}-\bar X_{2,0}\right)
+= \widehat{\mathrm{Cov}}(\bar X_{1,0},\bar X_{2,1}) - \widehat{\mathrm{Cov}}(\bar X_{1,0},\bar X_{2,0}).
+\]
+Again, URA implies $\widehat{\mathrm{Cov}}(\bar X_{1,0},\bar X_{2,1}) \approx 0$, so
+\[
+\widehat{\mathrm{Cov}}(\widehat{\pi}_{0,1},\widehat{\pi}_{1,2})
+= -\widehat{\mathrm{Cov}}(\bar X_{1,0},\bar X_{2,0})
+= -\widehat{\mathrm{Cov}}(\widehat{\pi}_{0,1},\widehat{\pi}_{0,2}),
+\]
+since $\widehat{\pi}_{0,2}=\bar X_{2,0}$.
+
+\paragraph{(iii) Why is $\widehat{\mathrm{Cov}}[\widehat{\pi}_{0,1},\widehat{\pi}_{1,2}] = \widehat{\mathrm{Cov}}[\widehat{\pi}_{1,1},\widehat{\pi}_{0,2}]$?}
+Compute
+\[
+\widehat{\mathrm{Cov}}(\widehat{\pi}_{1,1},\widehat{\pi}_{0,2})
+= \widehat{\mathrm{Cov}}\!\left(\bar X_{1,1}-\bar X_{1,0},\,\bar X_{2,0}\right)
+= \widehat{\mathrm{Cov}}(\bar X_{1,1},\bar X_{2,0}) - \widehat{\mathrm{Cov}}(\bar X_{1,0},\bar X_{2,0}).
+\]
+Under URA, $\widehat{\mathrm{Cov}}(\bar X_{1,1},\bar X_{2,0}) \approx 0$, hence
+\[
+\widehat{\mathrm{Cov}}(\widehat{\pi}_{1,1},\widehat{\pi}_{0,2})
+= -\widehat{\mathrm{Cov}}(\bar X_{1,0},\bar X_{2,0}).
+\]
+But part (ii) showed
+\[
+\widehat{\mathrm{Cov}}(\widehat{\pi}_{0,1},\widehat{\pi}_{1,2})
+= -\widehat{\mathrm{Cov}}(\bar X_{1,0},\bar X_{2,0}),
+\]
+so
+\[
+\widehat{\mathrm{Cov}}(\widehat{\pi}_{0,1},\widehat{\pi}_{1,2})
+= \widehat{\mathrm{Cov}}(\widehat{\pi}_{1,1},\widehat{\pi}_{0,2}).
+\]
 
 ### Commentary
+Because each equation includes only an intercept and a binary treatment indicator,
+$\widehat{\pi}_{0,j}$ equals the control-group mean and
+$\widehat{\pi}_{1,j}$ equals the treated--control difference in means.
+Under unconditional random assignment, treated and control subsamples are (approximately)
+independent.
+These two facts jointly imply the sign and symmetry restrictions in the top-left
+$4\times 4$ block of $\widehat{\mathrm{Var}}(\widehat{\pi})$, and the implied equalities
+are verified numerically up to machine precision.
 
 ---
 
 ### (\textcolor{blue}{[ \ \ ]} out of 4p) Q2.d: Implement Joint Test Manually
+```{r}
+# coef and vcov from SUR
+b_hat <- coef(sur_fit)
+V_hat <- vcov(sur_fit)
+nm <- names(b_hat)
+
+# 1) pick the J=10 treat coefficients
+treat_idx <- grep("_treat$", nm)
+J <- length(treat_idx)        # should be 10
+K <- length(b_hat)            # should be 20
+
+# 2) build R matrix selecting treat coefficients: R b = (pi_1,1,...,pi_1,J)'
+R <- matrix(0, nrow = J, ncol = K)
+for (j in 1:J) R[j, treat_idx[j]] <- 1
+r0 <- rep(0, J)
+
+# 3) compute quadratic form Q = (R b - r)' (R V R')^{-1} (R b - r)
+d <- as.vector(R %*% b_hat - r0)
+Q <- as.numeric(t(d) %*% solve(R %*% V_hat %*% t(R)) %*% d)
+
+# 4) F statistic and p-value using F_{J, Jn-K}
+F_stat <- Q / J
+df1 <- J
+n <- 445
+df2 <- J*n - K                         # should be 4430
+p_F <- 1 - pf(F_stat, df1 = df1, df2 = df2)
+
+# 5) S (Wald) statistic and p-value using Chi-square_J
+S_stat <- J * F_stat   # equals Q
+p_S <- 1 - pchisq(S_stat, df = J)
+
+c(J=J, K=K, n=n, df2=df2,
+  F_stat=F_stat, p_value_F=p_F,
+  S_stat=S_stat, p_value_S=p_S)
+
+```
 
 ### Script and Output
+We test the joint null hypothesis that the coefficients on \texttt{treat} are zero in all $J=10$ equations:
+\[
+H_0:\ \pi_{1,1}=\pi_{1,2}=\cdots=\pi_{1,10}=0.
+\]
+Using the companion document's expressions for Procedure 4, we compute the $F$ statistic and the Wald ($S$) statistic.
+With $n=445$ observations per equation and $K=2J=20$ parameters in the stacked system, the denominator degrees of freedom are
+\[
+Jn-K = 10\times 445 - 20 = 4430.
+\]
+Our manual calculations yield
+\[
+F = 2.0466 \quad \text{with} \quad p\text{-value} = 0.0254 \ \ \text{using } F_{10,4430},
+\]
+and equivalently
+\[
+S = J\cdot F = 20.4656 \quad \text{with} \quad p\text{-value} = 0.0251 \ \ \text{using } \chi^2_{10}.
+\]
+At the 5\% level, we reject $H_0$, indicating that the OPVs are not jointly balanced across treatment and control.
 
 ---
 
@@ -66,12 +266,55 @@ knitr::opts_chunk$set(echo = TRUE, fig.pos = "H", out.extra = "")
 
 ### Script and Output
 
+```{r q2e-automatic-joint-test, echo=TRUE}
+library(car)
+
+# Names of coefficients
+names(coef(sur_fit))
+
+# Joint null: all treat coefficients equal zero
+# We write one restriction per equation
+lh <- linearHypothesis(
+  sur_fit,
+  c(
+    "age_treat = 0",
+    "edu_treat = 0",
+    "nodegree_treat = 0",
+    "black_treat = 0",
+    "hisp_treat = 0",
+    "married_treat = 0",
+    "u74_treat = 0",
+    "u75_treat = 0",
+    "re74_treat = 0",
+    "re75_treat = 0"
+  ),
+  test = "F"
+)
+
+lh
+
+```
+```{r}
+F_auto <- lh[2, "F"]
+S_auto <- 10 * F_auto
+
+c(F_auto = F_auto, S_auto = S_auto)
+
+```
+
+
 ### Commentary
+The automatic joint test implemented via \texttt{car::linearHypothesis()} yields
+an $F$ statistic of $2.0466$ with a $p$-value of $0.02538$.
+These values coincide exactly with those obtained from the manual construction of the
+Wald test in Q2.d, as both procedures rely on the same linear restrictions and the same
+estimated variance--covariance matrix from the SUR estimator.
 
 ---
 
 ### (\textcolor{blue}{[ \ \ ]} out of 1p) Q2.f: Decision
-
+At the 5\% significance level, we reject the joint null hypothesis that all coefficients
+on \texttt{treat} are equal to zero across the system of equations.
 ---
 
 
@@ -79,24 +322,154 @@ knitr::opts_chunk$set(echo = TRUE, fig.pos = "H", out.extra = "")
 
 ### Script and Output
 
-### Commentary
+```{r q3-hotelling, echo=TRUE}
+opvs <- c("age","edu","nodegree","black","hisp",
+          "married","u74","u75","re74","re75")
 
+X1 <- df[df$treat == 1, opvs]
+X0 <- df[df$treat == 0, opvs]
+
+# Use DescTools::HotellingsT2Test()
+if (!requireNamespace("DescTools", quietly = TRUE)) install.packages("DescTools")
+library(DescTools)
+
+ht <- DescTools::HotellingsT2Test(X1, X0)
+ht
+
+# Extract T2 and p-value (in case you want to print neatly)
+T2 <- as.numeric(ht$statistic)
+p_T2 <- as.numeric(ht$p.value)
+
+c(T2 = T2, p_value = p_T2)
+
+```
+
+
+### Commentary
+We implement Procedure 5 using Hotelling’s two-sample $T^2$ test via
+\texttt{DescTools::HotellingsT2Test()} to assess joint balance in the
+$J=10$ observed predetermined variables (OPVs).
+The null hypothesis is
+\[
+H_0:\ \mathbb{E}[X \mid D=1] = \mathbb{E}[X \mid D=0],
+\]
+against the alternative that at least one component differs.
+
+The test yields a Hotelling’s statistic of $T^2 = 2.005$.
+Using the finite-sample $F$-approximation with degrees of freedom $(10,434)$,
+the associated $p$-value is $0.0314$.
+At the 5\% significance level, we therefore reject the null hypothesis of joint balance
+in the OPVs.
+
+This result is consistent with the joint SUR-based Wald test in Procedure~4 and
+with the treatment-assignment regression test in Procedure~6.
+Differences in numerical values across procedures reflect different finite-sample
+approximations (chi-square versus $F$), not differences in the underlying hypothesis
+being tested.
 ---
 
 ## (\textcolor{blue}{[ \ \ ]} out of 4p) Q4: Implement Procedure 6 (OPV do not predict treatment assignment)
 
 ### Script and Output
 
-### Commentary
+```{r q4-proc6-lpm, echo=TRUE}
+opvs <- c("age","edu","nodegree","black","hisp",
+          "married","u74","u75","re74","re75")
 
+lm_fit <- lm(treat ~ age + edu + nodegree + black + hisp +
+               married + u74 + u75 + re74 + re75,
+             data = df)
+
+summary(lm_fit)$r.squared
+summary(lm_fit)$fstatistic   # (value, numdf, dendf)
+```
+```{r}
+R2 <- summary(lm_fit)$r.squared
+n  <- nobs(lm_fit)
+M  <- length(opvs)  # number of slope parameters (10)
+
+F_manual <- (R2 / M) / ((1 - R2) / (n - (M + 1)))
+p_manual <- 1 - pf(F_manual, df1 = M, df2 = n - (M + 1))
+
+c(R2 = R2, n = n, M = M, F_manual = F_manual, p_manual = p_manual)
+
+```
+
+### Commentary
+We implement Procedure 6 by regressing the treatment indicator on a constant and the
+$J=10$ observed predetermined variables using a linear probability model.
+Let $R^2$ denote the coefficient of determination from this regression and let $M=10$
+be the number of slope parameters.
+Following the companion document, we compute the overall significance test statistic
+\[
+F=\frac{R^2/M}{(1-R^2)/(n-(M+1))},
+\]
+and obtain the corresponding $p$-value from an $F_{M,\,n-(M+1)}$ distribution.
+Using $n=445$, we obtain $F=2.005$ with a $p$-value of $0.0314$.
+We reject the null hypothesis.
 ---
 
 ## (\textcolor{blue}{[ \ \ ]} out of 5p) Q5: Implement Procedures 7 and 8 (control for FWER)
-
 ### Script and Output
+```{r q5-fwer, echo=TRUE}
+# Q5: Procedures 7 (Bonferroni) and 8 (Holm-Bonferroni)
+# We use the one-at-a-time p-values for H0,j: pi_{1,j}=0 (treat coefficient = 0) for each OPV.
+
+opvs <- c("age","edu","nodegree","black","hisp","married","u74","u75","re74","re75")
+
+# If you already created ols_fits in Q2.b, you can reuse it.
+# Otherwise:
+ols_fits <- lapply(opvs, function(v) lm(as.formula(paste0(v, " ~ treat")), data = df))
+names(ols_fits) <- opvs
+
+# Extract unadjusted p-values for treat in each equation
+p_raw <- sapply(ols_fits, function(m) summary(m)$coefficients["treat","Pr(>|t|)"])
+
+# Procedure 7: Bonferroni adjusted p-values = p_adj_j = min(1, J * p_j)
+# (implemented by p.adjust(method="bonferroni"))
+p_bonf <- p.adjust(p_raw, method = "bonferroni")
+
+# Procedure 8: Holm-Bonferroni adjusted p-values (implemented by p.adjust(method="holm"))
+p_holm <- p.adjust(p_raw, method = "holm")
+
+# Collect results
+res_q5 <- data.frame(
+  OPV = opvs,
+  p_raw = as.numeric(p_raw),
+  p_bonf = as.numeric(p_bonf),
+  p_holm = as.numeric(p_holm),
+  reject_bonf_5pct = (p_bonf <= 0.05),
+  reject_holm_5pct = (p_holm <= 0.05)
+)
+
+# Show table sorted by raw p-values (helpful for interpretation)
+res_q5[order(res_q5$p_raw), ]
+
+```
+
 
 ### Commentary
+Q5 controls the family-wise error rate (FWER) when testing balance in the $J=10$ OPVs
+using one-at-a-time tests of
+$H_{0,j}:\pi_{1,j}=0$ for each OPV $j$.
+Following the programming guidance, we implement:
 
+\begin{itemize}
+\item \textbf{Procedure 7 (Bonferroni)}, which adjusts p-values as
+$p^{(B)}_j=\min\{1,Jp_j\}$; and
+\item \textbf{Procedure 8 (Holm--Bonferroni)}, a step-down procedure that is weakly less
+conservative than Bonferroni.
+\end{itemize}
+
+Both procedures are implemented using \texttt{stats::p.adjust()}.
+At the 5\% significance level, only \texttt{nodegree} remains statistically significant
+after controlling the FWER under both Bonferroni and Holm--Bonferroni adjustments.
+All other OPVs have adjusted p-values well above 0.05.
+
+Therefore, we reject the joint null hypothesis of perfect balance across the OPVs,
+but the evidence for imbalance is driven entirely by the \texttt{nodegree} variable.
+This result is consistent with the earlier joint balance tests (Procedures 4 and 5)
+and the treatment-assignment test (Procedure 6).
 ---
 
 # (\textcolor{blue}{[ \ \ ]} out of 50p) PART II: Review of OLS for Causal Analysis
