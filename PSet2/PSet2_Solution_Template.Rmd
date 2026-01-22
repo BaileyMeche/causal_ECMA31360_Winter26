@@ -478,23 +478,155 @@ and the treatment-assignment test (Procedure 6).
 
 ### Script and Output
 
+```{r q6-fwer, echo=TRUE}
+
+treated  <- read.csv("nswre74_treated.csv")
+control  <- read.csv("nswre74_control.csv")
+treated$treat <- 1
+control$treat <- 0
+
+df <- rbind(treated, control)
+
+df$re74 <- df$re74 / 1000
+df$re75 <- df$re75 / 1000
+
+## Keep / check core variables
+vars <- c("re78", "treat", "re74", "re75")
+stopifnot(all(vars %in% names(df)))
+
+## Optional: quick checks
+with(df, table(treat))
+summary(df[, vars])
+
+df$re74 <- df$re74 / 1000
+df$re75 <- df$re75 / 1000
+
+fit1 <- lm(re78 ~ treat, data = df)
+rho_ols <- coef(fit1)[["treat"]]
+
+dm <- with(df, mean(re78[treat == 1]) - mean(re78[treat == 0]))
+
+# optional: “manual OLS” slope via covariance/variance
+rho_manual <- with(df, cov(treat, re78) / var(treat))
+
+c(rho_ols = rho_ols, dm = dm, rho_manual = rho_manual)
+all.equal(rho_ols, dm)
+all.equal(rho_ols, rho_manual)
+
+```
+
 ### Commentary
+
+Estimate of spec 1 by OLS, regressing post-intervention earnings on the treatment indicator is found by:
+$$
+\texttt{re78}_i = \alpha + \rho,\texttt{treat}_i + u_i.
+$$
+Under the random assignment of the NSW experiment, the OLS estimator of $\rho$ coincides with the difference in mean outcomes between treated and control groups.
+To verify this result, we compute:
+
+1. $\hat\rho_{\text{OLS}}$: the OLS slope on $\texttt{treat}_i$;
+2. $\widehat{DM} = \bar{\texttt{re78}}*{1}-\bar{\texttt{re78}}*{0}$: the difference in sample average earnings between treated and control;
+3. $\hat\rho_{\text{manual}}$: the OLS slope computed manually as $\widehat{\text{Cov}}(\texttt{treat}_i,\texttt{re78}_i)/\widehat{\text{Var}}(\texttt{treat}_i)$ (to be sure)
+
+Results: 
+$$
+\hat\rho_{\text{OLS}} = 1794.342, \qquad
+\widehat{DM} = 1794.342, \qquad
+\hat\rho_{\text{manual}} = 1794.342.
+$$
+
+As seen above, all quantities are numerically identical. Indeed, the OLS estimator of the treatment coefficient exactly equals the difference in average 1978 earnings between treated and control units. This was checked by the manual computation in $\hat\rho_{\text{manual}}$. The estimated ATE implies that being offered training increases earnings in 1978 by approximately $1,794 on average.
+
 
 ---
 
 ## (\textcolor{blue}{[ \ \ ]} out of 4p) Q7: Fully-saturated specification in Nodegree
 
 ### Script and Output
+```{r q7-fwer, echo=TRUE}
+df$degree <- 1 - df$nodegree
+
+fit_fs <- lm(re78 ~ 0 + nodegree + degree + treat:nodegree + treat:degree, data = df)
+coef(fit_fs)
+
+b <- coef(fit_fs)
+
+rho1 <- b["nodegree:treat"]   # CATE for nodegree = 1
+rho2 <- b["degree:treat"]     # CATE for nodegree = 0
+
+s1 <- mean(df$nodegree == 1)  # share without degree
+s0 <- mean(df$nodegree == 0)  # share with degree
+
+ate_hat <- s1 * rho1 + s0 * rho2
+
+c(
+  CATE_nodegree1 = rho1,
+  CATE_nodegree0 = rho2,
+  ATE = ate_hat
+)
+```
 
 ---
 
 ## (\textcolor{blue}{[ \ \ ]} out of 2p) Q8: Get $\widehat{ATE}$ in one step
 
+Implementing the $M=2$ version of the shortcut specification, we have:
+
 ### Script and Output
+```{r q8-fwer, echo=TRUE}
+df$re74 <- df$re74 / 1000
+df$re75 <- df$re75 / 1000
+
+B2 <- as.integer(df$nodegree == 1)  # nodegree group
+B1 <- 1 - B2                        # degree group
+
+N  <- nrow(df)
+N2 <- sum(B2)
+N1 <- sum(B1)
+
+Z_eps <- df$treat * B2 * (N2 / N)
+Z_varpi1 <- df$treat * (B1 - B2 * (N1 / N2))
+
+fit_short <- lm(df$re78 ~ 0 + B1 + B2 + Z_varpi1 + Z_eps)
+coef(fit_short)[["Z_eps"]]
+
+
+```
+
+The coefficient on `Z_eps` is $\hat\epsilon$ which equals $\widehat{ATE}$ by construction.
 
 ---
 
 ## (\textcolor{blue}{[ \ \ ]} out of 22p) Q9: Implications of estimating a not-fully saturated specification in an OPV that takes $M$ distinct values
+
+  In the fully saturated approach, we have $\hat\rho_m=\bar Y_{1,m}-\bar Y_{0,m}$. Consider instead the shortcut regression
+$$
+  Y_i = \sum_{m=1}^M \theta_m 1[x_i=a_m]+\rho D_i+u_i.
+$$
+Partialling out the indicators $1[x_i=a_m]$ yields residualized variables $\tilde Y_i=Y_i-\bar Y_{m(i)}, \tilde D_i=D_i-\bar D_{m(i)}$, hence
+$$
+  \hat\rho=\frac{\sum_i \tilde D_i\tilde Y_i}{\sum_i \tilde D_i^2}.
+$$
+Grouping by $m$:
+$$
+  \hat\rho=\sum_{m=1}^M \hat\omega_m\bigl(\bar Y_{1,m}-\bar Y_{0,m}\bigr),
+  \qquad
+  \hat\omega_m=\frac{\hat s_m\widehat{Var}(D|x=a_m)}{\sum_{j=1}^M \hat s_j\widehat{Var}(D|x=a_j)},
+$$
+where $\widehat{Var}(D|x=a_m)=\bar D_m(1-\bar D_m)$.
+
+To investigate when we have $\hat\rho=\widehat{ATE}$, we have that the fully saturated ATE estimator is $\widehat{ATE}=\sum_m \hat s_m\hat\rho_m$, while the shortcut is $\hat\rho=\sum_m \hat\omega_m\hat\rho_m)$. Thus we have $\hat\rho=\widehat{ATE}$ if either:
+  
+  1. treated shares are identical across $m$ (so $\widehat{Var}(D|m)$ is constant and $\hat\omega_m=\hat s_m)$; or
+2. $\hat\rho_m$ is identical across $m$, so any weighting yields the same average.
+
+Proving the consistency of $\hat\rho$, the deck states that regressing $Y_i$ on $(1,D_i,1[x_i=a_1],\dots,1[x_i=a_M])$ yields an OLS coefficient on $D_i$ that is consistent for ATE iff assignment probabilities are independent of $x_i$ or treatment effects are homogeneous in $x_i$ as in the notes. This matches the limit of the weighting representation: the shortcut converges to a variance-weighted average of CATEs, which equals the population-share-weighted ATE only under those conditions.
+
+Showing even split and precision weighting, if $\hat s_m=1/M$ for all $m$, then $\widehat{ATE}=\frac{1}{M}\sum_m \hat\rho_m$, namely equal weight across cells.
+
+Pertaining to the shortcut, we have that $\hat\omega_m\propto Var(D|m)=\bar D_m(1-\bar D_m)$, so it emphasizes cells with more within-cell treated/control balance. Under the usual within-cell homoskedasticity condition, slope variance scales like $\sigma_m^2/SST_{D,m}$, and for binary (D), $SST_{D,m}\propto n_m\bar D_m(1-\bar D_m)$ (Companion-to-NSW-Application: derivation using `SST_D` and $n\bar D(1-\bar D))$. Hence larger $Var(D|m)$ corresponds to more precise within-cell treatment-effect estimation, so the shortcut places relatively more weight on the more precisely estimated CATEs in that sense.
+
+**Takeaway**: Fully saturating in a discrete confounder $x$ averages cell-by-cell treatment effects using the population (or sample) composition. The fixed-effects shortcut that adds $x$ indicators but does not interact them with treatment instead averages the same cell-by-cell effects using weights that depend on how much within-cell variation there is in treatment assignment. This generally changes the estimand unless either assignment rates are constant across cells or treatment effects are constant across cells.
 
 ---
 
@@ -506,31 +638,84 @@ and the treatment-assignment test (Procedure 6).
 
 ### Script and Output
 
+```{r q10ai-fwer, echo=TRUE}
+df$re74 <- df$re74 / 1000
+df$re75 <- df$re75 / 1000
+
+# Spec 2
+fit2 <- lm(re78 ~ treat + nodegree + edu, data = df)
+
+# Spec 3 (nodegree + edu + other 8 OPVs; typical NSW OPVs shown)
+fit3 <- lm(re78 ~ treat + nodegree + edu + age + black + hisp + married + re74 + re75 + u74 + u75,
+           data = df)
+
+# Spec 4: add treat × (age - mean(age))
+df$age_c <- df$age - mean(df$age)
+fit4 <- lm(re78 ~ treat + nodegree + edu + age + black + hisp + married + re74 + re75 + u74 + u75 +
+             treat:age_c,
+           data = df)
+
+# ATE estimate + t-test (via lm summary)
+summ <- function(fit) summary(fit)$coef["treat", c("Estimate","Std. Error","t value","Pr(>|t|)")]
+rbind(Spec2 = summ(fit2), Spec3 = summ(fit3), Spec4 = summ(fit4))
+
+summ(fit2)
+```
+
 ### Commentary
+
+The table above reports estimates of the ATE of being offered training on 1978 earnings under three regression‐adjustment specifications. Across Specifications 2–4, the estimated ATE is remarkably stable, ranging from approximately \$1,646 to \$1,671. In all cases, the null hypothesis that the ATE is zero is rejected at the 1\% level using the standard OLS t‐test.
+
+Interpretation:
+Spec 2 adjusts only for educational attainment (`nodegree`, `edu`). The estimated ATE is positive and statistically significant at the 5% level. This indicates that, even with a minimal set of controls focused on education, the offer of training is associated with an increase in 1978 earnings of roughly $1,646 on average. Because education is a strong predictor of earnings, including it helps account for outcome variation without materially altering the experimental contrast between treated and control units.
 
 ---
 
 ### (\textcolor{blue}{[ \ \ ]} out of 1p) Q10.a.ii: Estimate Specification 3
 
 ### Script and Output
+```{r q10aii-fwer, echo=TRUE}
+summ(fit3)
+```
 
 ### Commentary
+
+Spec 3 adds the full set of observed pre-treatment variables to the regression. The estimated ATE remains very close to that from Spec 2 and is again statistically significant at the 1% level. The similarity of the point estimates across Specifications 2 and 3 suggests that additional OPVs beyond education do not meaningfully change the estimated treatment effect, consistent with the plausibility of random assignment. The standard error is also of similar magnitude, indicating modest efficiency gains from the expanded covariate set.
 
 ---
 
 ### (\textcolor{blue}{[ \ \ ]} out of 1p) Q10.a.iii: Estimate Specification 4
 
 ### Script and Output
+```{r q10aiii-fwer, echo=TRUE}
+summ(fit4)
+```
 
 ### Commentary
+
+Spec 4 allows for treatment-effect heterogeneity by age through an interaction between treatment and centered age. The estimated average effect, evaluated at the sample mean age, is again very close to those obtained under Specifications 2 and 3 and remains statistically significant at conventional levels. This indicates that allowing for age-related heterogeneity does not materially alter the estimated average impact of the training offer, reinforcing the robustness of the ATE estimate across alternative regression-adjustment specifications.
+
+Across all three specifications, the estimated ATE is stable—approximately \$1,650–\$1,670—and statistically significant. This consistency suggests that regression adjustment using balanced OPVs primarily serves to refine precision rather than to change the estimated treatment effect.
 
 ---
 
 ### (\textcolor{blue}{[ \ \ ]} out of 5p) Q10.b: Reasons to include OPVs when they are balanced
 
+
+Even if OPVs are balanced between treated and control groups, including them as regression covariates can be useful for at least two reasons:
+
+1. If OPVs explain variation in $\texttt{re78}$, then controlling for them can reduce the residual variance and thereby reduce the standard error of $\hat\rho$, yielding higher precision and tighter inference for the ATE. This is relevant even under randomized assignment because balance affects bias, not necessarily variance.
+
+2. Even in experiments, exact balance typically holds only in expectation. In a realized finite sample, adjusting for prognostic covariates can stabilize estimates and improve finite-sample efficiency.
+
+Moving from Spec 2 to Spec 3 adds additional OPVs. If these added OPVs are predictive of $\texttt{re78}$, then we would expect the standard error of the $\texttt{treat}$ coefficient to decrease or , while the point estimate may or may not change depending on finite-sample correlations.
+
 ---
 
 ### (\textcolor{blue}{[ \ \ ]} out of 1p) Q10.c:  Is it problematic to regression-adjust for OPVs that are lagged outcomes?
+
+
+Using lagged outcomes (as is the case for $\texttt{re74}, \texttt{re75})$ as regression covariates is not problematic so long as they are measured prior to treatment. In that case they are OPVs (pre-treatment variables) and can help improve precision because they tend to be strong predictors of future earnings. The main concern would be conditioning on variables affected by treatment (post-treatment variables), but $\texttt{re74}$ and $\texttt{re75}$ are pre-intervention in the NSW setting.
 
 ---
 
@@ -538,10 +723,30 @@ and the treatment-assignment test (Procedure 6).
 
 ### Script and Output
 
+```{r q10aiiii-fwer, echo=TRUE}
+library(car)
+
+# (i) Test H0: ATE = 0 in Spec 4 (coefficient on treat)
+car::linearHypothesis(fit4, "treat = 0")
+
+# (ii) Test H0: effect does not vary by age (interaction term equals 0)
+car::linearHypothesis(fit4, "treat:age_c = 0")
+```
+
 ### Commentary
+
+Interactions between OPVs and the treatment indicator allow the conditional average treatment effect to vary with observed characteristics (treatment effect heterogeneity). In Spec 4, the interaction with centered age explicitly models heterogeneity by age.
+
+In each hypothesis test, we have 
+
+1. (H_0:) ATE is zero corresponds to testing $\rho=0$, so `treat = 0`.
+2. (H_0:) no age heterogeneity corresponds to testing $\gamma=0$, so `treat:age_c = 0`.
+
+Each hypothesis is tested one-at-a-time using `car::linearHypothesis()` as instructed in the guidance.
 
 ---
 
 
 ## (\textcolor{blue}{[ \ \ ]} out of 5p) Q11: Mechanisms for NSW intervention to impact post-intervention earnings
 
+A plausible mechanism is that being offered the NSW program increases earnings in 1978 by increasing employment and job-specific human capital: the offer provides access to subsidized employment and training, which can raise labor market experience and skills, improving productivity and employability, and thus increasing post-intervention earnings measured in 1978.
