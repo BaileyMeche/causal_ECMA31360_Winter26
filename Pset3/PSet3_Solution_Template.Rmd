@@ -1,0 +1,232 @@
+---
+title: "ECMA 31360, PSet 3: Solutions"
+author: "YOUR NAMES, University of Chicago"
+geometry: "left=1cm,right=1cm,top=1cm,bottom=1.5cm"
+date: "XX-XX-2026"
+output: pdf_document
+classoption: dvipsnames
+header-includes:
+  - \usepackage{caption}
+  - \usepackage{float}
+  - \usepackage{xcolor}
+  - \usepackage{amsmath}
+  - \usepackage{enumitem}
+  - \usepackage[skins,breakable]{tcolorbox}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.pos = "H", out.extra = "")
+```
+
+\tcbset{
+  myinline/.style={
+    on line, % Makes the box inline
+    boxrule=0.2mm, % Border thickness
+    colframe=Orchid!80, % Border color
+    colback=Orchid!80, % Background color
+    coltext=white, % Text color
+    sharp corners, % No rounded corners
+    boxsep=-4pt, % Padding inside the box
+    left=4pt,
+    right=6pt
+  }
+}
+
+```{r setup-repos, include=FALSE}
+# Ensure CRAN is set for non-interactive knit sessions
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+```
+
+# (\textcolor{blue}{[ \ \ ]} out of 10p) PART I: Intent-to-Treat Versus Average Treatment Effect
+
+## (\textcolor{blue}{[ \ \ ]} out of 10p) Q1: An Exercise to Deep-dive the Difference b/w ITT and ATE
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q1.a: Describe ${ATE}^{o}$
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q1.b: Express $(Y_{i}^{o}(1),Y_{i}^{o}(0))$ as functions of $(Y_{i}(1),Y_{i}(0))$
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q1.c: Analytical Relationship between ${ATE}^{o}$ and $ATE$
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q1.d: Selection into the NSW program based on flipping an unbalanced coin
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q1.e: Selection into the NSW program based on gains
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q1.f: When ITT and ATE Differ
+
+---
+
+# (\textcolor{blue}{[ \ \ ]} out of 10p) PART II: Describe the Pseudo-Observational NSW Data
+
+## (\textcolor{blue}{[ \ \ ]} out of 3p) Q2: Compute Sample Averages of OPVs and outcome variable for PSID-1 and CPS-1 Samples
+
+### Script and Output
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 4p) Q3: Compare the PSID-1 and CPS-1 Comparison Groups to the NSW-Treated Sample
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 4p) Q4: Why do Dehajia and Wahba mimic observational data by combining the NSW-treated sample with survey data?
+
+---
+
+
+# (\textcolor{blue}{[ \ \ ]} out of 10p bonus) PART III: Target Estimand: ATE versus ATT of the NSW Offer
+
+## (\textcolor{blue}{[ \ \ ]} out of 2p) Q5.a
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 2p) Q5.b
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 4p) Q5.c
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 2p) Q5.d
+
+---
+
+---
+
+# (\textcolor{blue}{[ \ \ ]} out of 80p) PART IV: Regression-based Estimation of the Effect of the NSW Offer based on Pseudo-Observational Data
+
+## (\textcolor{blue}{[ \ \ ]} out of 9p) Q6: Implement the Treated-Control Comparison Estimator 
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q6.a: Get the DM estimate and its SE under Homoskedasticity
+
+### Script and output
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 3p) Q6.b: Get the Heteroskedasticity-robust SE of the DM estimator
+
+### Script and output
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 5p) Q6.c: Discuss DM Estimator of ATT of NSW Offer
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 8p) Q7: Prove Claim about identification and estimation of ATT
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 8p) Q8: Implement the Regression-Adjusted DM Estimator
+
+### (\textcolor{blue}{[ \ \ ]} out of 3p) Q8.a: Get the Adj.DM estimate and SE under Heteroskedasticity
+
+### Script and Output
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 5p) Q8.b: May the Adj.DM estimator improve over the DM estimator?
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 6p) Q9: Verify the Partialling-out Interpretation of OLS
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q9.a: Implement \tcbox[myinline]{Procedure B}
+
+### Script and Output
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q9.b: Implement \tcbox[myinline]{Procedure C}
+
+### Script and Output
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q9.c: Interpretation
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 18p) Q10: Implement the DML Estimator to estimate the partially-linear specification
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q10.a: Why may we prefer Specification 3 over Specification 2?
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q10.b: Relate \tcbox[myinline]{Procedure D} to \tcbox[myinline]{Procedure C}
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q10.c: Install packages (here or at the top)
+
+### Script and Output
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q10.d: Convert to `data.table` (here or above)
+
+### Script and Output
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q10.e: Collect OPVs names (here or above)
+
+### Script and Output
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q10.f: Specify the "causal model"
+
+### Script and Output
+
+### Commentary
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 1p) Q10.g: Suppress messages
+
+### Script and Output
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q10.h: Specify learners from $m(\cdot)$ and $l(\cdot)$
+
+### Script and Output
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q10.i: Initialize DML object
+
+### Script and Output
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q10.j: Estimate the Partial-Linear Model
+
+### Script and Output
+
+---
+
+### (\textcolor{blue}{[ \ \ ]} out of 2p) Q10.k: DML estimate of ATT of NSW Offer
+
+### Script and Output
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 10p) Q11: Compare ATT Estimates based on pseudo-observational data to Experimental estimates
+
+### Commentary
+
+---
+
+## (\textcolor{blue}{[ \ \ ]} out of 21p) Q12: Imbens and Xu's Defense: The importance of overlap and the use of trimming
+
