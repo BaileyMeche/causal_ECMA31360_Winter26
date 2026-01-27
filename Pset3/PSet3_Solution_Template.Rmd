@@ -110,19 +110,168 @@ options(repos = c(CRAN = "https://cloud.r-project.org"))
 
 ### Script and output
 
+```{r q6a_dm_homosk, message=FALSE, warning=FALSE}
+library(data.table)
+library(dplyr)
+library(lmtest)
+library(sandwich)
+
+# Load pseudo-observational data
+df <- fread("nswpsid.csv")
+
+# Per pset guidance: scale re74 and re75 by 1,000
+df <- df %>% mutate(
+  re74 = re74 / 1000,
+  re75 = re75 / 1000
+)
+
+# DM regression (Specification 1)
+m1 <- lm(re78 ~ treat, data = df)
+
+# Point estimate and homoskedastic SE
+summary(m1)$coefficients["treat", c("Estimate", "Std. Error")]
+
+# (Optional) full regression output
+summary(m1)
+
+```
+
 ---
 
 ### (\textcolor{blue}{[ \ \ ]} out of 3p) Q6.b: Get the Heteroskedasticity-robust SE of the DM estimator
 
 ### Script and output
 
+```{r q6b_dm_robust, message=FALSE, warning=FALSE}
+# Heteroskedasticity-robust (HC0) SE
+coeftest(m1, vcov. = vcovHC(m1, type = "HC0"))
+
+# (Optional) extract just the robust SE of treat
+sqrt(diag(vcovHC(m1, type = "HC0")))[["treat"]]
+```
+
 ---
 
 ### (\textcolor{blue}{[ \ \ ]} out of 5p) Q6.c: Discuss DM Estimator of ATT of NSW Offer
+The difference-in-means (DM) estimator compares average post-treatment earnings
+in 1978 between the treated group (units with \(D_i=1\)) and the control group
+(units with \(D_i=0\)). In population terms, the DM estimand is
+\[
+\mathbb{E}[Y_i \mid D_i=1] - \mathbb{E}[Y_i \mid D_i=0].
+\]
+
+Using the potential outcomes framework and the measurement equation
+\(Y_i = Y_i(1)D_i + Y_i(0)(1-D_i)\), this estimand can be written as
+\[
+\begin{aligned}
+\mathbb{E}[Y_i \mid D_i=1] - \mathbb{E}[Y_i \mid D_i=0]
+&= \mathbb{E}[Y_i(1) \mid D_i=1] - \mathbb{E}[Y_i(0) \mid D_i=0] \\
+&= \underbrace{\mathbb{E}[Y_i(1)-Y_i(0) \mid D_i=1]}_{\text{ATT}}
++ \underbrace{\left(
+\mathbb{E}[Y_i(0) \mid D_i=1] - \mathbb{E}[Y_i(0) \mid D_i=0]
+\right)}_{\text{confounding term}}.
+\end{aligned}
+\]
+
+Therefore, the DM estimator identifies the average treatment effect on the treated
+(\(\mathrm{ATT}\)) if and only if
+\[
+\mathbb{E}[Y_i(0) \mid D_i=1] = \mathbb{E}[Y_i(0) \mid D_i=0],
+\]
+that is, if untreated potential outcomes are mean-independent of treatment
+assignment (unconditional mean independence).
+
+In the pseudo-observational setting considered here, treatment is not randomly
+assigned: treated units (from the NSW experimental sample) and control units
+(from the PSID) differ systematically in baseline characteristics and
+pre-treatment earnings. As a result, the above condition is unlikely to hold,
+and the confounding term is generally nonzero. Consequently, the DM estimator
+does not have a credible causal interpretation as the ATT of the NSW offer in
+this context.
 
 ---
 
 ## (\textcolor{blue}{[ \ \ ]} out of 8p) Q7: Prove Claim about identification and estimation of ATT
+We prove Claim 1.
+
+\textbf{(i) Under (a)--(b), $ATT$ is identified.}
+
+By definition,
+\[
+ATT := \mathbb{E}\!\left[Y(1)-Y(0)\mid D=1\right]
+     = \mathbb{E}\!\left[\ \mathbb{E}\!\left(Y(1)-Y(0)\mid D=1,X\right)\ \middle|\ D=1\right].
+\]
+For treated units ($D=1$), the observed outcome equals the treated potential outcome:
+\[
+Y = Y(1)\quad \text{when } D=1 \ \Rightarrow\ \mathbb{E}[Y(1)\mid D=1,X]=\mathbb{E}[Y\mid D=1,X].
+\]
+Assumption (b) (CMIA0) states
+\[
+\mathbb{E}[Y(0)\mid D=1,X=x]=\mathbb{E}[Y(0)\mid D=0,X=x]\ \ \forall x\in \mathcal{X}.
+\]
+For control units ($D=0$), the observed outcome equals the untreated potential outcome:
+\[
+Y = Y(0)\quad \text{when } D=0 \ \Rightarrow\ \mathbb{E}[Y(0)\mid D=0,X]=\mathbb{E}[Y\mid D=0,X].
+\]
+Combining these,
+\[
+\mathbb{E}[Y(1)-Y(0)\mid D=1,X]
+= \mathbb{E}[Y\mid D=1,X]-\mathbb{E}[Y\mid D=0,X].
+\]
+Hence,
+\[
+\boxed{
+ATT
+= \mathbb{E}\!\left[\ \mathbb{E}[Y\mid D=1,X]-\mathbb{E}[Y\mid D=0,X]\ \middle|\ D=1\right].
+}
+\]
+Assumption (a) (COC) guarantees that for each $x$ in the relevant support there exist both treated and control units, so the conditional expectations above are well-defined.
+
+\bigskip
+\textbf{(ii) Under (a)--(d), the observed conditional expectation function is linear:}
+\[
+\mathbb{E}[Y\mid D=d,X=x]=\alpha+\rho d+\beta'x.
+\]
+
+When $D=0$, we observe $Y=Y(0)$, and by (c),
+\[
+\mathbb{E}[Y\mid D=0,X=x] = \mathbb{E}[Y(0)\mid X=x] = \alpha_0+\theta_0'x.
+\]
+When $D=1$, we observe $Y=Y(1)$, and by (d),
+\[
+\mathbb{E}[Y\mid D=1,X=x] = \mathbb{E}[Y(1)\mid D=1,X=x] = \alpha_1+\gamma+\theta_1'x.
+\]
+With the homogeneity restriction $\theta_0=\theta_1=\theta$, define
+\[
+\alpha := \alpha_0,\quad \beta := \theta,\quad \rho := (\alpha_1+\gamma-\alpha_0).
+\]
+Then for $d\in\{0,1\}$ we can write
+\[
+\mathbb{E}[Y\mid D=d,X=x]=\alpha+\rho d+\beta'x,
+\]
+which is linear in $(d,x)$.
+
+\bigskip
+\textbf{(iii) $\hat\rho$ is a consistent estimator of $\rho$.}
+
+Given the correct linear specification in (ii), i.i.d.\ sampling, and the usual OLS regularity conditions (in particular, no perfect multicollinearity), the OLS estimator $\hat\rho$ from the regression of $Y$ on $(1,D,X)$ is consistent for the population coefficient $\rho$.
+
+\bigskip
+\textbf{(iv) Under (a)--(d), $\rho=ATT$.}
+
+Using the conditional means above and $\theta_0=\theta_1=\theta$,
+\[
+\mathbb{E}[Y(1)-Y(0)\mid D=1,X=x]
+= (\alpha_1+\gamma+\theta'x)-(\alpha_0+\theta'x)
+= \alpha_1+\gamma-\alpha_0
+= \rho.
+\]
+Since this expression does not depend on $x$,
+\[
+ATT=\mathbb{E}\!\left[\mathbb{E}[Y(1)-Y(0)\mid D=1,X]\mid D=1\right]
+=\mathbb{E}[\rho\mid D=1]=\rho.
+\]
+Therefore, $\hat\rho \xrightarrow{p} \rho = ATT$, i.e., the OLS coefficient on $D$ consistently estimates $ATT$ under the stated assumptions.
 
 ---
 
@@ -132,10 +281,59 @@ options(repos = c(CRAN = "https://cloud.r-project.org"))
 
 ### Script and Output
 
+```{r q8a_adj_dm, message=FALSE, warning=FALSE}
+library(dplyr)
+library(lmtest)
+library(sandwich)
+
+# Assume df is already loaded in Q6 and re74/re75 already scaled by 1,000.
+# If not, uncomment the next lines:
+# library(data.table)
+# df <- data.table::fread("nswpsid.csv") %>% mutate(re74 = re74/1000, re75 = re75/1000)
+
+# Create agesq as instructed
+df <- df %>% mutate(agesq = age^2)
+
+# Specification 2 (Adj-DM / Regression Adjustment)
+m2 <- lm(re78 ~ treat + age + agesq + edu + nodegree + black + hisp + re74 + re75, data = df)
+
+# Robust SE (White / HC0)
+coeftest(m2, vcov. = vcovHC(m2, type = "HC0"))
+
+# (Optional) extract only treat coef and its robust SE
+c(
+  rho_hat = coef(m2)[["treat"]],
+  se_hc0  = sqrt(diag(vcovHC(m2, type = "HC0")))[["treat"]]
+)
+
+```
+
 ---
 
 ### (\textcolor{blue}{[ \ \ ]} out of 5p) Q8.b: May the Adj.DM estimator improve over the DM estimator?
 
+Yes, the Adj-DM estimator \emph{may} improve over the DM estimator.
+
+The DM estimator compares $\mathbb{E}[Y\mid D=1]-\mathbb{E}[Y\mid D=0]$ and identifies $ATT$
+only under a strong unconditional comparability condition such as
+\[
+\mathbb{E}[Y(0)\mid D=1]=\mathbb{E}[Y(0)\mid D=0],
+\]
+which is implausible in the pseudo-observational setting because treated (NSW) and controls (PSID)
+differ systematically in baseline characteristics and pre-treatment earnings.
+
+In contrast, the adjusted difference-in-means (regression adjustment) estimates $\rho$ from
+\[
+Y_i = \alpha + \rho D_i + \beta'X_i + u_i,
+\]
+where $X_i=(age_i,age_i^2,edu_i,nodegree_i,black_i,hisp_i,re74_i,re75_i)$.
+This approach attempts to account for \emph{observable} differences between treated and controls.
+Under the conditions in Claim 1---in particular overlap (COC), conditional mean independence of
+untreated potential outcomes (CMIA0), and correct linear specification with homogeneous slopes---the
+population coefficient $\rho$ equals $ATT$, and OLS provides a consistent estimator of $ATT$.
+
+However, improvement is not guaranteed: if the linear functional form is misspecified or if there are
+important \emph{unobserved} confounders not captured by $X$, the Adj-DM estimator may still be biased.
 ---
 
 ## (\textcolor{blue}{[ \ \ ]} out of 6p) Q9: Verify the Partialling-out Interpretation of OLS
@@ -144,16 +342,78 @@ options(repos = c(CRAN = "https://cloud.r-project.org"))
 
 ### Script and Output
 
+```{r q9a_procB, message=FALSE, warning=FALSE}
+library(lmtest)
+library(sandwich)
+
+# We assume you already ran Q8 and created:
+#   df (data frame) and m2 (Spec 2 regression)
+# If not, run Q8 chunk first.
+
+# Procedure B:
+# 1) Regress D on X and keep residuals vhat
+m_D_on_X <- lm(treat ~ age + agesq + edu + nodegree + black + hisp + re74 + re75, data = df)
+vhat <- resid(m_D_on_X)
+
+# 2) Regress Y on vhat; slope should equal rho from the full regression
+m_B <- lm(re78 ~ vhat, data = df)
+
+rho_A <- coef(m2)[["treat"]]      # from full regression (Spec 2)
+rho_B <- coef(m_B)[["vhat"]]      # from Procedure B
+c(rho_A = rho_A, rho_B = rho_B, diff = rho_A - rho_B)
+
+summary(m_B)
+
+```
+
 ---
 
 ### (\textcolor{blue}{[ \ \ ]} out of 2p) Q9.b: Implement \tcbox[myinline]{Procedure C}
 
 ### Script and Output
+```{r q9b_procC, message=FALSE, warning=FALSE}
+# Procedure C:
+# 1) Regress D on X and keep residuals vhat (reuse vhat if already computed)
+
+# 2) Regress Y on X and keep residuals ehat
+m_Y_on_X <- lm(re78 ~ age + agesq + edu + nodegree + black + hisp + re74 + re75, data = df)
+ehat <- resid(m_Y_on_X)
+
+# 3) Regress ehat on vhat (often with no intercept)
+m_C <- lm(ehat ~ 0 + vhat, data = df)
+
+rho_C <- coef(m_C)[["vhat"]]
+c(rho_A = rho_A, rho_C = rho_C, diff = rho_A - rho_C)
+
+summary(m_C)
+```
 
 ---
 
 ### (\textcolor{blue}{[ \ \ ]} out of 2p) Q9.c: Interpretation
+The Frisch--Waugh--Lovell (FWL) theorem implies that the coefficient on $D_i$ (here $treat_i$)
+in the multiple regression
+\[
+Y_i = \alpha + \rho D_i + \beta'X_i + u_i
+\]
+can be obtained by \emph{partialling out} the covariates $X_i$ from both $D_i$ and $Y_i$.
 
+In particular, let $\hat v_i$ be the residual from regressing $D_i$ on $X_i$:
+\[
+D_i = \pi'X_i + v_i,\qquad \hat v_i = D_i - \widehat{\pi'X_i}.
+\]
+Procedure B then regresses $Y_i$ on $\hat v_i$ and the resulting slope equals $\hat\rho$.
+Equivalently, let $\hat\varepsilon_i$ be the residual from regressing $Y_i$ on $X_i$:
+\[
+Y_i = \delta'X_i + \varepsilon_i,\qquad \hat\varepsilon_i = Y_i - \widehat{\delta'X_i}.
+\]
+Procedure C regresses $\hat\varepsilon_i$ on $\hat v_i$ (often without an intercept) and the slope
+again equals $\hat\rho$.
+
+Thus, partialling-out means that OLS identifies the effect of $D$ using only the variation in $D$
+that is orthogonal (linearly unrelated) to $X$, and the corresponding orthogonal component of $Y$.
+Numerically, Procedures B and C should reproduce exactly the same $\hat\rho$ as the full regression
+(up to numerical precision).
 ---
 
 ## (\textcolor{blue}{[ \ \ ]} out of 18p) Q10: Implement the DML Estimator to estimate the partially-linear specification
