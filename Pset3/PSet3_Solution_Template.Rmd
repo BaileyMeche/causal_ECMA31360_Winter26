@@ -12,6 +12,9 @@ header-includes:
   - \usepackage{amsmath}
   - \usepackage{enumitem}
   - \usepackage[skins,breakable]{tcolorbox}
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r setup, include=FALSE}
@@ -43,27 +46,27 @@ options(repos = c(CRAN = "https://cloud.r-project.org"))
 
 ### (\textcolor{blue}{[ \ \ ]} out of 2p) Q1.a: Describe ${ATE}^{o}$
 
----
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 1p) Q1.b: Express $(Y_{i}^{o}(1),Y_{i}^{o}(0))$ as functions of $(Y_{i}(1),Y_{i}(0))$
 
----
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 1p) Q1.c: Analytical Relationship between ${ATE}^{o}$ and $ATE$
 
----
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 2p) Q1.d: Selection into the NSW program based on flipping an unbalanced coin
 
----
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 2p) Q1.e: Selection into the NSW program based on gains
 
----
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 2p) Q1.f: When ITT and ATE Differ
 
----
+------------------------------------------------------------------------
 
 # (\textcolor{blue}{[ \ \ ]} out of 10p) PART II: Describe the Pseudo-Observational NSW Data
 
@@ -71,40 +74,39 @@ options(repos = c(CRAN = "https://cloud.r-project.org"))
 
 ### Script and Output
 
----
+------------------------------------------------------------------------
 
 ## (\textcolor{blue}{[ \ \ ]} out of 4p) Q3: Compare the PSID-1 and CPS-1 Comparison Groups to the NSW-Treated Sample
 
----
+------------------------------------------------------------------------
 
 ## (\textcolor{blue}{[ \ \ ]} out of 4p) Q4: Why do Dehajia and Wahba mimic observational data by combining the NSW-treated sample with survey data?
 
----
-
+------------------------------------------------------------------------
 
 # (\textcolor{blue}{[ \ \ ]} out of 10p bonus) PART III: Target Estimand: ATE versus ATT of the NSW Offer
 
 ## (\textcolor{blue}{[ \ \ ]} out of 2p) Q5.a
 
----
+------------------------------------------------------------------------
 
 ## (\textcolor{blue}{[ \ \ ]} out of 2p) Q5.b
 
----
+------------------------------------------------------------------------
 
 ## (\textcolor{blue}{[ \ \ ]} out of 4p) Q5.c
 
----
+------------------------------------------------------------------------
 
 ## (\textcolor{blue}{[ \ \ ]} out of 2p) Q5.d
 
----
+------------------------------------------------------------------------
 
----
+------------------------------------------------------------------------
 
 # (\textcolor{blue}{[ \ \ ]} out of 80p) PART IV: Regression-based Estimation of the Effect of the NSW Offer based on Pseudo-Observational Data
 
-## (\textcolor{blue}{[ \ \ ]} out of 9p) Q6: Implement the Treated-Control Comparison Estimator 
+## (\textcolor{blue}{[ \ \ ]} out of 9p) Q6: Implement the Treated-Control Comparison Estimator
 
 ### (\textcolor{blue}{[ \ \ ]} out of 1p) Q6.a: Get the DM estimate and its SE under Homoskedasticity
 
@@ -116,53 +118,68 @@ library(dplyr)
 library(lmtest)
 library(sandwich)
 
-# Load pseudo-observational data
-df <- fread("nswpsid.csv")
+# Robustly find the pseudo-observational file (course file name is nswpsid.csv)
+fn <- c("nswpsid.csv", "nswpsid.csv")
+fn <- fn[file.exists(fn)][1]
+stopifnot(!is.na(fn))
 
-# Per pset guidance: scale re74 and re75 by 1,000
-df <- df %>% mutate(
-  re74 = re74 / 1000,
-  re75 = re75 / 1000
-)
+dt <- data.table::fread(fn)
+
+# Guidance: scale re74 and re75 by 1,000; also create agesq when needed later
+dt[, re74 := re74/1000]
+dt[, re75 := re75/1000]
+dt[, agesq := age^2]
+
+# Keep treat numeric for OLS; create a factor copy for DoubleML's classif learner
+dt[, treat_f := factor(treat, levels = c(0, 1))]
+
+df <- as.data.frame(dt)
 
 # DM regression (Specification 1)
 m1 <- lm(re78 ~ treat, data = df)
 
-# Point estimate and homoskedastic SE
-summary(m1)$coefficients["treat", c("Estimate", "Std. Error")]
+# Homoskedastic SE (via coeftest + vcov(m1) per guidance)
+tab_homosk <- lmtest::coeftest(m1, vcov. = vcov(m1))["treat", c("Estimate","Std. Error")]
 
-# (Optional) full regression output
-summary(m1)
-
+tab_homosk
 ```
 
----
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 3p) Q6.b: Get the Heteroskedasticity-robust SE of the DM estimator
 
 ### Script and output
 
 ```{r q6b_dm_robust, message=FALSE, warning=FALSE}
-# Heteroskedasticity-robust (HC0) SE
-coeftest(m1, vcov. = vcovHC(m1, type = "HC0"))
+tab_hc0 <- lmtest::coeftest(m1, vcov. = sandwich::vcovHC(m1, type = "HC0"))["treat", c("Estimate","Std. Error")]
 
-# (Optional) extract just the robust SE of treat
-sqrt(diag(vcovHC(m1, type = "HC0")))[["treat"]]
+m_re78_1 <- mean(df$re78[df$treat == 1])
+m_re78_0 <- mean(df$re78[df$treat == 0])
+dm_from_means <- m_re78_1 - m_re78_0
+
+out_q6 <- rbind(
+  homosk = c(rho_hat = unname(tab_homosk["Estimate"]), se = unname(tab_homosk["Std. Error"])),
+  HC0    = c(rho_hat = unname(tab_hc0["Estimate"]),    se = unname(tab_hc0["Std. Error"]))
+)
+
+out_q6
+c(re78_1 = m_re78_1, re78_0 = m_re78_0, dm = dm_from_means)
+stopifnot(isTRUE(all.equal(out_q6["homosk","rho_hat"], dm_from_means, tolerance = 1e-10)))
 ```
 
----
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 5p) Q6.c: Discuss DM Estimator of ATT of NSW Offer
-The difference-in-means (DM) estimator compares average post-treatment earnings
-in 1978 between the treated group (units with \(D_i=1\)) and the control group
-(units with \(D_i=0\)). In population terms, the DM estimand is
-\[
+
+The difference-in-means (DM) estimator compares average post-treatment
+earnings in 1978 between the treated group (units with $D_i=1$) and the
+control group (units with $D_i=0$). In population terms, the DM estimand
+is $$
 \mathbb{E}[Y_i \mid D_i=1] - \mathbb{E}[Y_i \mid D_i=0].
-\]
+$$
 
 Using the potential outcomes framework and the measurement equation
-\(Y_i = Y_i(1)D_i + Y_i(0)(1-D_i)\), this estimand can be written as
-\[
+$Y_i = Y_i(1)D_i + Y_i(0)(1-D_i)$, this estimand can be written as $$
 \begin{aligned}
 \mathbb{E}[Y_i \mid D_i=1] - \mathbb{E}[Y_i \mid D_i=0]
 &= \mathbb{E}[Y_i(1) \mid D_i=1] - \mathbb{E}[Y_i(0) \mid D_i=0] \\
@@ -171,109 +188,97 @@ Using the potential outcomes framework and the measurement equation
 \mathbb{E}[Y_i(0) \mid D_i=1] - \mathbb{E}[Y_i(0) \mid D_i=0]
 \right)}_{\text{confounding term}}.
 \end{aligned}
-\]
+$$
 
-Therefore, the DM estimator identifies the average treatment effect on the treated
-(\(\mathrm{ATT}\)) if and only if
-\[
+Therefore, the DM estimator identifies the average treatment effect on
+the treated ($\mathrm{ATT}$) if and only if $$
 \mathbb{E}[Y_i(0) \mid D_i=1] = \mathbb{E}[Y_i(0) \mid D_i=0],
-\]
-that is, if untreated potential outcomes are mean-independent of treatment
-assignment (unconditional mean independence).
+$$ that is, if untreated potential outcomes are mean-independent of
+treatment assignment (unconditional mean independence).
 
-In the pseudo-observational setting considered here, treatment is not randomly
-assigned: treated units (from the NSW experimental sample) and control units
-(from the PSID) differ systematically in baseline characteristics and
-pre-treatment earnings. As a result, the above condition is unlikely to hold,
-and the confounding term is generally nonzero. Consequently, the DM estimator
-does not have a credible causal interpretation as the ATT of the NSW offer in
-this context.
+In the pseudo-observational setting considered here, treatment is not
+randomly assigned: treated units (from the NSW experimental sample) and
+control units (from the PSID) differ systematically in baseline
+characteristics and pre-treatment earnings. As a result, the above
+condition is unlikely to hold, and the confounding term is generally
+nonzero. Consequently, the DM estimator does not have a credible causal
+interpretation as the ATT of the NSW offer in this context.
 
----
+------------------------------------------------------------------------
 
 ## (\textcolor{blue}{[ \ \ ]} out of 8p) Q7: Prove Claim about identification and estimation of ATT
+
 We prove Claim 1.
 
 \textbf{(i) Under (a)--(b), $ATT$ is identified.}
 
-By definition,
-\[
+By definition, $$
 ATT := \mathbb{E}\!\left[Y(1)-Y(0)\mid D=1\right]
      = \mathbb{E}\!\left[\ \mathbb{E}\!\left(Y(1)-Y(0)\mid D=1,X\right)\ \middle|\ D=1\right].
-\]
-For treated units ($D=1$), the observed outcome equals the treated potential outcome:
-\[
+$$ For treated units ($D=1$), the observed outcome equals the treated
+potential outcome: $$
 Y = Y(1)\quad \text{when } D=1 \ \Rightarrow\ \mathbb{E}[Y(1)\mid D=1,X]=\mathbb{E}[Y\mid D=1,X].
-\]
-Assumption (b) (CMIA0) states
-\[
+$$ Assumption (b) (CMIA0) states $$
 \mathbb{E}[Y(0)\mid D=1,X=x]=\mathbb{E}[Y(0)\mid D=0,X=x]\ \ \forall x\in \mathcal{X}.
-\]
-For control units ($D=0$), the observed outcome equals the untreated potential outcome:
-\[
+$$ For control units ($D=0$), the observed outcome equals the untreated
+potential outcome: $$
 Y = Y(0)\quad \text{when } D=0 \ \Rightarrow\ \mathbb{E}[Y(0)\mid D=0,X]=\mathbb{E}[Y\mid D=0,X].
-\]
-Combining these,
-\[
+$$ Combining these, $$
 \mathbb{E}[Y(1)-Y(0)\mid D=1,X]
 = \mathbb{E}[Y\mid D=1,X]-\mathbb{E}[Y\mid D=0,X].
-\]
-Hence,
-\[
+$$ Hence, $$
 \boxed{
 ATT
 = \mathbb{E}\!\left[\ \mathbb{E}[Y\mid D=1,X]-\mathbb{E}[Y\mid D=0,X]\ \middle|\ D=1\right].
 }
-\]
-Assumption (a) (COC) guarantees that for each $x$ in the relevant support there exist both treated and control units, so the conditional expectations above are well-defined.
+$$ Assumption (a) (COC) guarantees that for each $x$ in the relevant
+support there exist both treated and control units, so the conditional
+expectations above are well-defined.
 
 \bigskip
+
 \textbf{(ii) Under (a)--(d), the observed conditional expectation function is linear:}
-\[
+$$
 \mathbb{E}[Y\mid D=d,X=x]=\alpha+\rho d+\beta'x.
-\]
+$$
 
-When $D=0$, we observe $Y=Y(0)$, and by (c),
-\[
+When $D=0$, we observe $Y=Y(0)$, and by (c), $$
 \mathbb{E}[Y\mid D=0,X=x] = \mathbb{E}[Y(0)\mid X=x] = \alpha_0+\theta_0'x.
-\]
-When $D=1$, we observe $Y=Y(1)$, and by (d),
-\[
+$$ When $D=1$, we observe $Y=Y(1)$, and by (d), $$
 \mathbb{E}[Y\mid D=1,X=x] = \mathbb{E}[Y(1)\mid D=1,X=x] = \alpha_1+\gamma+\theta_1'x.
-\]
-With the homogeneity restriction $\theta_0=\theta_1=\theta$, define
-\[
+$$ With the homogeneity restriction $\theta_0=\theta_1=\theta$, define
+$$
 \alpha := \alpha_0,\quad \beta := \theta,\quad \rho := (\alpha_1+\gamma-\alpha_0).
-\]
-Then for $d\in\{0,1\}$ we can write
-\[
+$$ Then for $d\in\{0,1\}$ we can write $$
 \mathbb{E}[Y\mid D=d,X=x]=\alpha+\rho d+\beta'x,
-\]
-which is linear in $(d,x)$.
+$$ which is linear in $(d,x)$.
 
 \bigskip
+
 \textbf{(iii) $\hat\rho$ is a consistent estimator of $\rho$.}
 
-Given the correct linear specification in (ii), i.i.d.\ sampling, and the usual OLS regularity conditions (in particular, no perfect multicollinearity), the OLS estimator $\hat\rho$ from the regression of $Y$ on $(1,D,X)$ is consistent for the population coefficient $\rho$.
+Given the correct linear specification in (ii), i.i.d. sampling, and the
+usual OLS regularity conditions (in particular, no perfect
+multicollinearity), the OLS estimator $\hat\rho$ from the regression of
+$Y$ on $(1,D,X)$ is consistent for the population coefficient $\rho$.
 
 \bigskip
+
 \textbf{(iv) Under (a)--(d), $\rho=ATT$.}
 
-Using the conditional means above and $\theta_0=\theta_1=\theta$,
-\[
+Using the conditional means above and $\theta_0=\theta_1=\theta$, $$
 \mathbb{E}[Y(1)-Y(0)\mid D=1,X=x]
 = (\alpha_1+\gamma+\theta'x)-(\alpha_0+\theta'x)
 = \alpha_1+\gamma-\alpha_0
 = \rho.
-\]
-Since this expression does not depend on $x$,
-\[
+$$ Since this expression does not depend on $x$, $$
 ATT=\mathbb{E}\!\left[\mathbb{E}[Y(1)-Y(0)\mid D=1,X]\mid D=1\right]
 =\mathbb{E}[\rho\mid D=1]=\rho.
-\]
-Therefore, $\hat\rho \xrightarrow{p} \rho = ATT$, i.e., the OLS coefficient on $D$ consistently estimates $ATT$ under the stated assumptions.
+$$ Therefore, $\hat\rho \xrightarrow{p} \rho = ATT$, i.e., the OLS
+coefficient on $D$ consistently estimates $ATT$ under the stated
+assumptions.
 
----
+------------------------------------------------------------------------
 
 ## (\textcolor{blue}{[ \ \ ]} out of 8p) Q8: Implement the Regression-Adjusted DM Estimator
 
@@ -282,59 +287,62 @@ Therefore, $\hat\rho \xrightarrow{p} \rho = ATT$, i.e., the OLS coefficient on $
 ### Script and Output
 
 ```{r q8a_adj_dm, message=FALSE, warning=FALSE}
-library(dplyr)
-library(lmtest)
-library(sandwich)
-
-# Assume df is already loaded in Q6 and re74/re75 already scaled by 1,000.
-# If not, uncomment the next lines:
-# library(data.table)
-# df <- data.table::fread("nswpsid.csv") %>% mutate(re74 = re74/1000, re75 = re75/1000)
-
-# Create agesq as instructed
-df <- df %>% mutate(agesq = age^2)
-
-# Specification 2 (Adj-DM / Regression Adjustment)
+# Spec 2: regression-adjusted DM per the exact x_i list in the problem
 m2 <- lm(re78 ~ treat + age + agesq + edu + nodegree + black + hisp + re74 + re75, data = df)
 
-# Robust SE (White / HC0)
-coeftest(m2, vcov. = vcovHC(m2, type = "HC0"))
+tab2 <- lmtest::coeftest(m2, vcov. = sandwich::vcovHC(m2, type = "HC0"))
+q8_report <- tab2["treat", c("Estimate","Std. Error","t value","Pr(>|t|)")]
+q8_report
 
-# (Optional) extract only treat coef and its robust SE
-c(
-  rho_hat = coef(m2)[["treat"]],
-  se_hc0  = sqrt(diag(vcovHC(m2, type = "HC0")))[["treat"]]
-)
+# (optional) 95% CI using robust SE
+ci95 <- with(as.list(q8_report),
+             c(lo = Estimate - 1.96*`Std. Error`, hi = Estimate + 1.96*`Std. Error`))
+ci95
 
 ```
 
----
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 5p) Q8.b: May the Adj.DM estimator improve over the DM estimator?
 
 Yes, the Adj-DM estimator \emph{may} improve over the DM estimator.
 
-The DM estimator compares $\mathbb{E}[Y\mid D=1]-\mathbb{E}[Y\mid D=0]$ and identifies $ATT$
-only under a strong unconditional comparability condition such as
-\[
+The DM estimator compares $\mathbb{E}[Y\mid D=1]-\mathbb{E}[Y\mid D=0]$
+and identifies $ATT$ only under a strong unconditional comparability
+condition such as $$
 \mathbb{E}[Y(0)\mid D=1]=\mathbb{E}[Y(0)\mid D=0],
-\]
-which is implausible in the pseudo-observational setting because treated (NSW) and controls (PSID)
-differ systematically in baseline characteristics and pre-treatment earnings.
+$$ which is implausible in the pseudo-observational setting because
+treated (NSW) and controls (PSID) differ systematically in baseline
+characteristics and pre-treatment earnings.
 
-In contrast, the adjusted difference-in-means (regression adjustment) estimates $\rho$ from
-\[
+In contrast, the adjusted difference-in-means (regression adjustment)
+estimates $\rho$ from $$
 Y_i = \alpha + \rho D_i + \beta'X_i + u_i,
-\]
-where $X_i=(age_i,age_i^2,edu_i,nodegree_i,black_i,hisp_i,re74_i,re75_i)$.
-This approach attempts to account for \emph{observable} differences between treated and controls.
-Under the conditions in Claim 1---in particular overlap (COC), conditional mean independence of
-untreated potential outcomes (CMIA0), and correct linear specification with homogeneous slopes---the
-population coefficient $\rho$ equals $ATT$, and OLS provides a consistent estimator of $ATT$.
+$$ where
+$X_i=(age_i,age_i^2,edu_i,nodegree_i,black_i,hisp_i,re74_i,re75_i)$.
+This approach attempts to account for \emph{observable} differences
+between treated and controls. Under the conditions in Claim 1---in
+particular overlap (COC), conditional mean independence of untreated
+potential outcomes (CMIA0), and correct linear specification with
+homogeneous slopes---the population coefficient $\rho$ equals $ATT$, and
+OLS provides a consistent estimator of $ATT$.
 
-However, improvement is not guaranteed: if the linear functional form is misspecified or if there are
-important \emph{unobserved} confounders not captured by $X$, the Adj-DM estimator may still be biased.
----
+However, improvement is not guaranteed: if the linear functional form is
+misspecified or if there are important \emph{unobserved} confounders not
+captured by $X$, the Adj-DM estimator may still be biased.
+
+In summary, Adj-DM may improve over DM because it targets $ATT$ under
+**conditional** comparability (after controlling for OPVs) rather than
+unconditional comparability. In Claim 1, $ATT$ is identified if overlap
+holds and baseline conditional mean independence holds, i.e.
+$\mathbb{E}[Y(0)\mid D=1,X=x]=\mathbb{E}[Y(0)\mid D=0,X=x]$ for all $x$,
+and under the additional linear-in-parameters + homogeneous-slopes
+restrictions the regression coefficient $\rho$ equals $ATT$. Thus,
+controlling for OPVs can reduce confounding from observed differences
+between NSW-treated and PSID individuals, potentially moving estimates
+toward the experimental benchmark. However, if the linear specification
+is misspecified or if selection operates through unobservables not
+captured by $X$, Adj-DM can remain biased.
 
 ## (\textcolor{blue}{[ \ \ ]} out of 6p) Q9: Verify the Partialling-out Interpretation of OLS
 
@@ -366,11 +374,12 @@ summary(m_B)
 
 ```
 
----
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 2p) Q9.b: Implement \tcbox[myinline]{Procedure C}
 
 ### Script and Output
+
 ```{r q9b_procC, message=FALSE, warning=FALSE}
 # Procedure C:
 # 1) Regress D on X and keep residuals vhat (reuse vhat if already computed)
@@ -388,105 +397,368 @@ c(rho_A = rho_A, rho_C = rho_C, diff = rho_A - rho_C)
 summary(m_C)
 ```
 
----
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 2p) Q9.c: Interpretation
-The Frisch--Waugh--Lovell (FWL) theorem implies that the coefficient on $D_i$ (here $treat_i$)
-in the multiple regression
-\[
+
+The Frisch--Waugh--Lovell (FWL) theorem implies that the coefficient on
+$D_i$ (here $treat_i$) in the multiple regression $$
 Y_i = \alpha + \rho D_i + \beta'X_i + u_i
-\]
-can be obtained by \emph{partialling out} the covariates $X_i$ from both $D_i$ and $Y_i$.
+$$ can be obtained by \emph{partialling out} the covariates $X_i$ from
+both $D_i$ and $Y_i$.
 
-In particular, let $\hat v_i$ be the residual from regressing $D_i$ on $X_i$:
-\[
+In particular, let $\hat v_i$ be the residual from regressing $D_i$ on
+$X_i$: $$
 D_i = \pi'X_i + v_i,\qquad \hat v_i = D_i - \widehat{\pi'X_i}.
-\]
-Procedure B then regresses $Y_i$ on $\hat v_i$ and the resulting slope equals $\hat\rho$.
-Equivalently, let $\hat\varepsilon_i$ be the residual from regressing $Y_i$ on $X_i$:
-\[
+$$ Procedure B then regresses $Y_i$ on $\hat v_i$ and the resulting
+slope equals $\hat\rho$. Equivalently, let $\hat\varepsilon_i$ be the
+residual from regressing $Y_i$ on $X_i$: $$
 Y_i = \delta'X_i + \varepsilon_i,\qquad \hat\varepsilon_i = Y_i - \widehat{\delta'X_i}.
-\]
-Procedure C regresses $\hat\varepsilon_i$ on $\hat v_i$ (often without an intercept) and the slope
-again equals $\hat\rho$.
+$$ Procedure C regresses $\hat\varepsilon_i$ on $\hat v_i$ (often
+without an intercept) and the slope again equals $\hat\rho$.
 
-Thus, partialling-out means that OLS identifies the effect of $D$ using only the variation in $D$
-that is orthogonal (linearly unrelated) to $X$, and the corresponding orthogonal component of $Y$.
-Numerically, Procedures B and C should reproduce exactly the same $\hat\rho$ as the full regression
-(up to numerical precision).
----
+Thus, partialling-out means that OLS identifies the effect of $D$ using
+only the variation in $D$ that is orthogonal (linearly unrelated) to
+$X$, and the corresponding orthogonal component of $Y$. Numerically,
+Procedures B and C should reproduce exactly the same $\hat\rho$ as the
+full regression (up to numerical precision). ---
 
 ## (\textcolor{blue}{[ \ \ ]} out of 18p) Q10: Implement the DML Estimator to estimate the partially-linear specification
 
 ### (\textcolor{blue}{[ \ \ ]} out of 2p) Q10.a: Why may we prefer Specification 3 over Specification 2?
 
----
+Specification 2 imposes a *fully linear* conditional expectation
+function, $$
+  \mathbb{E}[Y\mid D=d,X=x] = \alpha + \rho d + \beta'x,
+$$ so identification/consistency relies not only on overlap and
+conditional mean independence, but also on **correct linear functional
+form** (and the associated “homogeneous slopes” restriction discussed in
+earlier claims).
+
+Specification 3 instead adopts a *partially linear* structure, $$
+\mathbb{E}[Y\mid D=d,X=x] = \rho d + g(x),
+$$ which keeps the causal parameter of interest $\rho$ linear in $D$ but
+allows the relationship between $Y$ and $X$ to be flexible through
+$g(\cdot)$. In the provided implementation, the nuisance functions are
+estimated flexibly via machine-learning (here, random forests), and the
+“partialling out” score plus **cross-fitting** is used to reduce
+overfitting bias. This makes Specification 3 attractive when we are
+concerned that a purely linear model (Specification 2) may be
+misspecified.
+
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 2p) Q10.b: Relate \tcbox[myinline]{Procedure D} to \tcbox[myinline]{Procedure C}
 
----
+Procedure C and Procedure D share the same logic: **residualize** $Y$
+and \$D\$ with respect to $X$, then regress the residualized outcome on
+the residualized treatment. The difference is that Procedure C
+residualizes using **OLS linear projections**, while Procedure D
+residualizes using **flexible first-stage predictors** (machine
+learning) for
+$l(x)=\mathbb{E}[Y\mid X=x]) \text{ and } (m(x)=\mathbb{E}[D\mid X=x],$
+and then applies cross-fitting.
+
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 1p) Q10.c: Install packages (here or at the top)
 
 ### Script and Output
 
----
+```{r q10c_install}
+pkgs <- c("DoubleML", "data.table", "mlr3", "mlr3learners")
+to_install <- pkgs[!sapply(pkgs, requireNamespace, quietly = TRUE)]
+if (length(to_install) > 0) install.packages(to_install)
+
+library(DoubleML)
+library(data.table)
+library(mlr3)
+library(mlr3learners)
+```
+
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 1p) Q10.d: Convert to `data.table` (here or above)
 
 ### Script and Output
 
----
+```{r q10d_datatable}
+# Load pseudo-observational data (PSID controls)
+dt <- data.table::fread("nswpsid.csv")
+
+# Guidance: scale re74 and re75 by 1,000
+dt[, re74 := re74 / 1000]
+dt[, re75 := re75 / 1000]
+
+# (Optional, if you want parity with Spec 2)
+dt[, agesq := age^2]
+
+# Ensure data.table
+data.table::setDT(dt)
+head(dt)
+```
+
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 1p) Q10.e: Collect OPVs names (here or above)
 
 ### Script and Output
 
----
+```{r q10e_opvs}
+# Original OPVs (pre-treatment covariates) in the NSW-PSID pseudo-observational file
+pretreat_colnames <- c(
+  "age", "edu", "black", "hisp", "married",
+  "re74", "re75", "u74", "u75", "nodegree"
+)
+
+pretreat_colnames
+```
+
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 2p) Q10.f: Specify the "causal model"
 
 ### Script and Output
 
+```{r q10f_dml_data}
+dml_data_psid <- DoubleML::DoubleMLData$new(
+  dt,
+  y_col = "re78",
+  d_cols = "treat",
+  x_cols = pretreat_colnames
+)
+
+dml_data_psid
+class(dml_data_psid)
+```
+
 ### Commentary
 
----
+This declares the outcome $Y=\texttt{re78}$, treatment
+$D=\texttt{treat}$, and covariates $X$ as the OPVs. DoubleML will
+construct the partially linear regression target where
+$l(x)=\mathbb{E}[Y\mid X=x]$ and $m(x)=\mathbb{E}[D\mid X=x]$ are
+nuisance components estimated in the first stage, followed by the
+“partialling out” second stage.
+
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 1p) Q10.g: Suppress messages
 
 ### Script and Output
 
----
+```{r q10g_suppress}
+# Suppress verbose messages from mlr3 (per instructions)
+if (requireNamespace("lgr", quietly = TRUE)) {
+  lgr::get_logger("mlr3")$set_threshold("warn")
+}
+```
+
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 2p) Q10.h: Specify learners from $m(\cdot)$ and $l(\cdot)$
 
 ### Script and Output
 
----
+```{r q10h_learners}
+# Specify an RF model as the learner model for l(x)=E[re78|X=x]
+ml_l_rf <- mlr3::lrn("regr.ranger")
+
+# Specify an RF model as the learner model for m(x)=E[treat|X=x]
+# For classification, ensure probability predictions
+ml_m_rf <- mlr3::lrn("classif.ranger", predict_type = "prob")
+
+ml_l_rf
+ml_m_rf
+```
+
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 2p) Q10.i: Initialize DML object
 
 ### Script and Output
 
----
+```{r q10i_init}
+set.seed(3141)
+
+obj_dml_plr <- DoubleML::DoubleMLPLR$new(
+  dml_data_psid,
+  ml_l = ml_l_rf, ml_m = ml_m_rf,
+  n_folds = 2,
+  score = "partialling out",
+  apply_cross_fitting = TRUE
+)
+
+obj_dml_plr
+```
+
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 2p) Q10.j: Estimate the Partial-Linear Model
 
 ### Script and Output
 
----
+```{r q10j_fit}
+class(obj_dml_plr)
+methods("summary")
+
+obj_dml_plr$fit()
+
+# Print (works for R6)
+obj_dml_plr
+
+# Use the R6-provided summary method if available
+if ("summary" %in% names(obj_dml_plr)) {
+  obj_dml_plr$summary()
+}
+
+# Always safe: extract what you need directly
+c(rho_hat = obj_dml_plr$coef, se = obj_dml_plr$se)
+```
+
+------------------------------------------------------------------------
 
 ### (\textcolor{blue}{[ \ \ ]} out of 2p) Q10.k: DML estimate of ATT of NSW Offer
 
 ### Script and Output
 
----
+```{r q10k_extract}
+# Fit DML (R6 object)
+obj_dml_plr$fit()
+
+# Print the fitted object (safe)
+obj_dml_plr
+
+# Use the R6 summary method (NOT base::summary())
+obj_dml_plr$summary()
+
+# Extract estimate + SE directly (always safe)
+rho_hat_dml <- as.numeric(obj_dml_plr$coef)
+se_hat_dml  <- as.numeric(obj_dml_plr$se)
+c(rho_hat_dml = rho_hat_dml, se_hat_dml = se_hat_dml)
+```
+
+The DML estimate of the $ATT$ under Specification 3 is
+$\hat\rho_{\mathrm{DML}}=\texttt{obj\_dml\_plr\$coef}$ with standard
+error $\texttt{obj\_dml\_plr\$se}$. With $n\_folds=2$ and cross-fitting,
+the procedure produces two fold-specific estimates $\hat\rho_{1,2}$ and
+$\hat\rho_{2,1}$, and reports their average as
+$\hat\rho_{\mathrm{DML}}$.
+
+------------------------------------------------------------------------
 
 ## (\textcolor{blue}{[ \ \ ]} out of 10p) Q11: Compare ATT Estimates based on pseudo-observational data to Experimental estimates
 
+```{r q11_compare}
+library(lmtest)
+library(sandwich)
+
+# Helper: pull treat estimate + HC0 SE from an lm()
+treat_est_hc0 <- function(mod, term = "treat") {
+  tab <- lmtest::coeftest(mod, vcov. = sandwich::vcovHC(mod, type = "HC0"))
+  c(att_hat = tab[term, "Estimate"], se = tab[term, "Std. Error"])
+}
+
+# Spec 1 (DM)
+m1 <- lm(re78 ~ treat, data = df)
+s1 <- treat_est_hc0(m1, term = "treat")
+
+# Spec 2 (Adj-DM)
+m2 <- lm(re78 ~ treat + age + agesq + edu + nodegree + black + hisp + re74 + re75, data = df)
+s2 <- treat_est_hc0(m2, term = "treat")
+
+# Spec 3 (DML) – assumes you ran Q10j already
+s3 <- c(att_hat = as.numeric(obj_dml_plr$coef), se = as.numeric(obj_dml_plr$se))
+
+# Experimental benchmark:
+# Option A (preferred): compute from an experimental NSW file if present
+bench <- c(att_hat = NA_real_, se = NA_real_)
+nsw_fn <- c("nsw.csv", "nsw_experimental.csv", "nsw_experiment.csv")
+nsw_fn <- nsw_fn[file.exists(nsw_fn)][1]
+if (!is.na(nsw_fn)) {
+  nsw <- data.table::fread(nsw_fn)
+  m_exp <- lm(re78 ~ treat, data = as.data.frame(nsw))
+  bench <- treat_est_hc0(m_exp, term = "treat")
+} else {
+  # Option B: paste your PSet 2 DM numbers here (PSet3 background says ~1794)
+  bench["att_hat"] <- 1794
+  bench["se"]      <- NA_real_
+}
+
+est_table <- data.frame(
+  spec   = c("Spec 1: DM", "Spec 2: Adj-DM (OLS)", "Spec 3: DML (PLR)", "Experimental benchmark (PSet 2)"),
+  att_hat = c(s1["att_hat"], s2["att_hat"], s3["att_hat"], bench["att_hat"]),
+  se      = c(s1["se"],      s2["se"],      s3["se"],      bench["se"])
+)
+est_table
+```
+
 ### Commentary
 
----
+Table X compares ATT estimates from the NSW–PSID pseudo-observational data under Specifications 1–3 to the experimental benchmark from PSet 2. In the pseudo-observational sample, the raw DM estimate (Spec 1) can differ sharply from the experimental estimate because the treated NSW sample and the PSID comparison sample differ systematically in pre-treatment variables; consequently, \(\mathbb{E}[Y(0)\mid D=1]\neq \mathbb{E}[Y(0)\mid D=0]\) is plausible, so the confounding term is unlikely to be negligible.
+
+Moving from Spec 1 to Spec 2 and Spec 3 progressively increases adjustment for OPVs: Spec 2 imposes a linear-in-parameters CEF in \((D,X)\), while Spec 3 keeps \(\rho\) linear but allows \(g(X)\) to be flexible and uses partialling-out with cross-fitting. In my results, the extent to which these adjustments move estimates toward the experimental benchmark indicates how much of the original confounding is explained by observed covariates (and, for DML, by non-linearities in their relationship to outcomes/treatment). In light of this comparison, LaLonde’s concern is most compelling when the pseudo-observational design exhibits weak comparability; the more my estimates remain sensitive across Specs 1–3 (or remain far from the experimental benchmark), the more it supports his skepticism.
+
+------------------------------------------------------------------------
 
 ## (\textcolor{blue}{[ \ \ ]} out of 21p) Q12: Imbens and Xu's Defense: The importance of overlap and the use of trimming
 
+A central lesson from Imbens and Xu is that lack of overlap (“common
+support”) can be a first-order obstacle to replicating experimental
+benchmarks with nonexperimental methods. When treated units have
+covariate profiles that are rare or absent among available controls,
+estimators must rely on extrapolation, and even sophisticated
+adjustments can become fragile. In the LaLonde-style designs (treated
+from the experiment, controls from large observational datasets), this
+can show up as treated propensity scores lying outside the support of
+control propensity scores, which undermines the credibility of any
+identification strategy that conditions on covariates.
+
+Imbens and Xu emphasize trimming as a practical, data-driven way to
+improve overlap by restricting attention to units where treated and
+control observations are comparable. Their trimming procedure is
+designed to remove observations (including possibly treated units) whose
+propensity-score profiles do not overlap well with the other group. This
+improves the comparability of the remaining sample and reduces reliance
+on extrapolation—though it comes at the cost of smaller effective sample
+sizes and a change in the target population (the estimand becomes an ATT
+for the trimmed subpopulation).
+
+Reading Imbens and Xu can soften LaLonde’s broad skepticism: the
+inability to replicate benchmarks is not solely “because nonexperimental
+methods are bad,” but often because the *design* generates poor overlap,
+making the task nearly impossible without restricting the sample. Once
+overlap is improved through trimming, a wide range of estimators can
+become substantially more stable and may cluster around the experimental
+benchmark. Thus, whether nonexperimental methods “work” depends
+critically on overlap diagnostics and careful design decisions
+(including trimming), not only on the choice among regression, matching,
+weighting, or DML.
+
+```{r q12_overlap_optional}
+
+# Propensity score model using OPVs (logit)
+ps_mod <- glm(
+  treat ~ age + edu + black + hisp + married + re74 + re75 + u74 + u75 + nodegree,
+  family = binomial(),
+  data = df
+)
+df$ps_hat <- as.numeric(predict(ps_mod, type = "response"))
+
+# Overlap diagnostics: treated vs control support
+rng_t1 <- range(df$ps_hat[df$treat == 1])
+rng_t0 <- range(df$ps_hat[df$treat == 0])
+c(rng_treated_lo = rng_t1[1], rng_treated_hi = rng_t1[2],
+  rng_ctrl_lo    = rng_t0[1], rng_ctrl_hi    = rng_t0[2])
+
+# Support-based trimming: keep intersection of supports
+lo <- max(rng_t1[1], rng_t0[1])
+hi <- min(rng_t1[2], rng_t0[2])
+df_trim <- subset(df, ps_hat >= lo & ps_hat <= hi)
+
+c(N_full = nrow(df), N_trim = nrow(df_trim), lo = lo, hi = hi)
+
+# (Optional) re-estimate Spec 2 on trimmed sample to see stability
+m2_trim <- lm(re78 ~ treat + age + agesq + edu + nodegree + black + hisp + re74 + re75, data = df_trim)
+lmtest::coeftest(m2_trim, vcov. = sandwich::vcovHC(m2_trim, type = "HC0"))["treat", ]
+```
